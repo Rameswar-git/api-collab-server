@@ -1,0 +1,250 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: API Collab  - Server
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8080
+paths:
+  /applications:
+    get:
+      summary: List all applications
+      operationId: get-all-applications
+      tags:
+        - Applications
+      responses:
+        '200':
+          description: A list of applications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationList"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create a new application
+      operationId: create-new-applications
+      tags:
+        - Applications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Application'
+      responses:
+        '201':
+          description: Newly created API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+  /applications/{applicationId}:
+    parameters:
+      - name: applicationId
+        in: path
+        required: true
+        description: The Id of the application to retrieve
+        schema:
+          type: string
+    get:
+      summary: Retrieve information for a specific application
+      operationId: get-application-by-Id
+      tags:
+        - Applications
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationList"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      summary: Update a existing application
+      operationId: update-application
+      tags:
+        - Applications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Application'
+      responses:
+        '201':
+          description: Newly created API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+  /applications/{applicationId}/apis:
+    parameters:
+      - name: applicationId
+        in: path
+        required: true
+        description: The Id of the application
+        schema:
+          type: string
+    get:
+      summary: Retrieve APIs associated with a specific application
+      operationId: get-apis-by-application-id
+      tags:
+        - Applications
+      responses:
+        '201':
+          description: List of Apis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiList"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create a new API under this application
+      operationId: create-new-api
+      tags:
+        - Applications
+        - APIs
+      requestBody:
+        content:
+         multipart/form-data:
+           schema: # Request payload
+            type: object
+            properties: # Request parts
+              id:
+                type: string
+              name:
+                type: string
+              version:
+                type: string
+              swaggerDoc:
+                type: string
+                format: binary
+
+      responses:
+        '201':
+          description: Newly created API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Api"
+
+  /apis/{apiId}:
+    parameters:
+      - name: apiId
+        in: path
+        required: true
+        description: The Id of the API
+        schema:
+          type: string
+    get:
+      summary: Retrieve information for a specific API
+      operationId: get-api-by-id
+      tags:
+        - APIs
+      responses:
+        '201':
+          description: List of Apis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Api"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /apis/{apiId}/swaggerDoc:
+    parameters:
+      - name: apiId
+        in: path
+        required: true
+        description: The Id of the API
+        schema:
+          type: string
+    get:
+      description: Retrieve the swagger API specification
+      tags:
+        - APIs
+      responses:
+        '201':
+          description: The raw API description in plain text
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  schemas:
+    Application:
+      required:
+        - name
+        - email
+      properties:
+        applicationId:
+          type: string
+          description: Unique application reference
+        name:
+          type: string
+          description: Name of the application
+        email:
+          type: string
+          description: Email address of the main contact
+    ApplicationList:
+      properties:
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+
+    Api:
+      required:
+        - name
+        - version
+      properties:
+        apiId:
+          type: string
+          description: Unique application reference
+        name:
+          type: string
+          description: Name of the application
+        version:
+          type: string
+          description: Email address of the main contact
+
+    ApiList:
+      properties:
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Api'
+
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
