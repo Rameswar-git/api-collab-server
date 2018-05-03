@@ -22,7 +22,7 @@ public class Api extends BaseEntity {
     @Column(nullable = false)
     private String version;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String description;
 
     @Column()
@@ -43,5 +43,13 @@ public class Api extends BaseEntity {
         this.version = version;
         this.swaggerDefinition = swaggerDefinition;
         this.tags = tags;
+    }
+
+    @PrePersist
+    @PreUpdate
+    void truncateDescription() {
+        if(description.length() > 255) {
+            description = description.substring(0, 255);
+        }
     }
 }
