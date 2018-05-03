@@ -6,8 +6,13 @@ import io.apicollab.server.dto.ApiListDTO;
 import io.apicollab.server.exception.ApiPortalException;
 import io.apicollab.server.mapper.ApiMapper;
 import io.apicollab.server.service.ApiService;
+import io.apicollab.server.service.ApiSpecParserService;
 import io.apicollab.server.service.ApplicationService;
+import io.apicollab.server.web.commons.APIErrors;
+import io.apicollab.server.web.commons.APIValidationException;
+import io.apicollab.server.web.commons.ValidationResultDTO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -17,11 +22,12 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Valid;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.util.Arrays.asList;
 
 @RestController
 @Validated
@@ -37,6 +43,7 @@ public class ApiController {
     @Autowired
     private ApiMapper apiMapper;
 
+
     @GetMapping("/applications/{applicationId}/apis")
     public ApiListDTO getApplicationApis(@PathVariable String applicationId) {
         applicationService.findById(applicationId);
@@ -51,10 +58,14 @@ public class ApiController {
     @PostMapping(value = "/applications/{applicationId}/apis", consumes = "multipart/form-data")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiDTO create(@PathVariable String applicationId,
-                         @Valid ApiDTO apiDTO,
                          @RequestPart("swaggerDoc") final MultipartFile swaggerDoc) {
+        if (swaggerDoc.isEmpty()) {
+            ValidationResultDTO resultDTO = new ValidationResultDTO("swaggerDoc", "API Specification is empty", "");
+            throw new APIValidationException(APIErrors.VALIDATION_ERROR, asList(resultDTO));
+        }
+        ApiDTO apiDTO = ApiSpecParserService.parse(extractFileContent(swaggerDoc));
+        validateDTO(apiDTO);
         Api api = apiMapper.toEntity(apiDTO);
-        api.setSwaggerDefinition(extractFileContent(swaggerDoc));
         return apiMapper.toDto(applicationService.createNewApiVersion(applicationId, api));
     }
 
@@ -69,16 +80,25 @@ public class ApiController {
 
     private String extractFileContent(final MultipartFile file) {
         try (InputStream inputStream = file.getInputStream()) {
-            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
-                StringBuilder swaggerDefinitionContent = new StringBuilder();
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    swaggerDefinitionContent.append(line);
-                }
-                return swaggerDefinitionContent.toString();
-            }
+            return IOUtils.toString(inputStream);
         } catch (IOException e) {
             throw new ApiPortalException("Error occurred while processing swagger document");
+        }
+    }
+
+    private void validateDTO(ApiDTO apiDTO) {
+        List<ValidationResultDTO> validation = new ArrayList<>();
+        if (apiDTO.getName() == null || apiDTO.getName().isEmpty()) {
+            validation.add(new ValidationResultDTO("name", "Missing title/name in the API specification", apiDTO.getName()));
+        }
+        if (apiDTO.getVersion() == null || apiDTO.getVersion().isEmpty()) {
+            validation.add(new ValidationResultDTO("version", "Missing version in the API specification", apiDTO.getVersion()));
+        }
+        if (apiDTO.getDescription() == null || apiDTO.getDescription().isEmpty()) {
+            validation.add(new ValidationResultDTO("description", "Missing description in the API specification", apiDTO.getDescription()));
+        }
+        if (!validation.isEmpty()) {
+            throw new APIValidationException(APIErrors.VALIDATION_ERROR, validation);
         }
     }
 }

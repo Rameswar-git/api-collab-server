@@ -1,0 +1,16 @@
+openapi: "3.0.0"
+info:
+  version:
+  title:
+  license:
+    name: MIT
+servers:
+  - url: http://petstore.swagger.io/v1
+pathsVariablesIsInvalid:
+  /pets:
+    get:
+      summary: List all pets
+      operationId: listPets
+      tags:
+        - pets
+      parameters:

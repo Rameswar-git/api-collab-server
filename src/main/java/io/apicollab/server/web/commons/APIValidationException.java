@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
-class APIValidationException extends APIException {
+public class APIValidationException extends APIException {
 
     private static final long serialVersionUID = -7423209109074845495L;
 

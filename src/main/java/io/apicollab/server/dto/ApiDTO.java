@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 @Builder
@@ -19,9 +20,17 @@ public class ApiDTO implements Serializable {
 
     @JsonProperty("id")
     private String apiId;
+
     @NotBlank
     private String name;
+
     @NotBlank
     private String version;
+
+    @NotBlank
+    private String description;
+
+    private List<String> tags;
+
     private String swaggerDefinition;
 }

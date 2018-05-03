@@ -2,6 +2,7 @@ package io.apicollab.server.web.commons;
 
 import brave.Tracer;
 import io.apicollab.server.exception.ApiExistsException;
+import io.apicollab.server.exception.ApiParsingException;
 import io.apicollab.server.exception.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,7 @@ class RestExceptionHandler {
         //Set the status code with payload.
         return new ResponseEntity<>(err, new HttpHeaders(), err.getStatus());
     }
+
 
     /**
      * Catch API Validation Exceptions thrown by the developer and return a developer friendly response.
@@ -138,5 +140,18 @@ class RestExceptionHandler {
             log.error("Uncaught Exception on traceID: {}" + tracer.currentSpan().context().traceIdString(), ex);
         }
         return handleAPIException(new APIException(ex.getMessage(), APIErrors.CONFLICT_ERROR.name(), APIErrors.CONFLICT_ERROR.status));
+    }
+
+    @ExceptionHandler(ApiParsingException.class)
+    public ResponseEntity<APIValidationExceptionDTO> handleApiParsingException(ApiParsingException ex) {
+        if (log.isErrorEnabled()) {
+            log.error("Uncaught Exception on traceID: {}" + tracer.currentSpan().context().traceIdString(), ex);
+        }
+        List<ValidationResultDTO> validationErrors = ex.getErrorMessages()
+                .stream()
+                .map(m -> new ValidationResultDTO(null, m, null))
+                .collect(Collectors.toList());
+        APIValidationException validationException = new APIValidationException(ex.getMessage(), APIErrors.VALIDATION_ERROR.name(), APIErrors.VALIDATION_ERROR.status, validationErrors);
+        return handleAPIValidationException(validationException);
     }
 }

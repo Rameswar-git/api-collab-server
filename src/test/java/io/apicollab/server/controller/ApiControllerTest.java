@@ -3,6 +3,7 @@ package io.apicollab.server.controller;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import io.apicollab.server.repository.ApiRepository;
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,6 +18,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,14 +40,31 @@ public class ApiControllerTest {
     @Autowired
     private ApiRepository apiRepository;
 
+    private String validAPISpec;
+
     @Before
     public void cleanup() {
+        validAPISpec = getFile("apis/valid.yml");
         apiRepository.deleteAll();
+    }
+
+    private String getFile(String fileName) {
+        String result = "";
+        ClassLoader classLoader = getClass().getClassLoader();
+        try {
+            result = IOUtils.toString(classLoader.getResourceAsStream(fileName));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
     @Test
     public void createApiWithNoNameAndNoVersion() throws Exception {
-        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", "{\"openapi\":\"3.0.0\"}".getBytes());
+        String spec = validAPISpec
+                .replaceFirst("title:.*", "title:")
+                .replaceFirst("version:.*", "version:");
+        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", spec.getBytes());
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
                 .file(swaggerDoc);
         mockMvc.perform(builder).andExpect(status().isBadRequest())
@@ -56,10 +75,11 @@ public class ApiControllerTest {
 
     @Test
     public void createApiWithNoName() throws Exception {
-        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", "{\"openapi\":\"3.0.0\"}".getBytes());
+        String spec = validAPISpec
+                .replaceFirst("title:.*", "title:");
+        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", spec.getBytes());
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
-                .file(swaggerDoc)
-                .param("version", "0.1");
+                .file(swaggerDoc);
         mockMvc.perform(builder).andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", is("VALIDATION_ERROR")))
                 .andExpect(jsonPath("$.validationErrors.*", hasSize(1)))
@@ -68,10 +88,11 @@ public class ApiControllerTest {
 
     @Test
     public void createApiWithNoVersion() throws Exception {
-        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", "{\"openapi\":\"3.0.0\"}".getBytes());
+        String spec = validAPISpec
+                .replaceFirst("version:.*", "version:");
+        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", spec.getBytes());
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
-                .file(swaggerDoc)
-                .param("name", "API1");
+                .file(swaggerDoc);
         mockMvc.perform(builder).andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", is("VALIDATION_ERROR")))
                 .andExpect(jsonPath("$.validationErrors.*", hasSize(1)))
@@ -80,9 +101,10 @@ public class ApiControllerTest {
 
     @Test
     public void createApiWithNoSwaggerDoc() throws Exception {
+        String spec = "";
+        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", spec.getBytes());
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
-                .param("name", "API1")
-                .param("version", "0.1");
+                .file(swaggerDoc);
         mockMvc.perform(builder).andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", is("VALIDATION_ERROR")))
                 .andExpect(jsonPath("$.validationErrors.*", hasSize(1)))
@@ -91,37 +113,37 @@ public class ApiControllerTest {
 
     @Test
     public void createApiWithValidData() throws Exception {
-        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", "{\"openapi\":\"3.0.0\"}".getBytes());
+        String spec = validAPISpec;
+        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", spec.getBytes());
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
-                .file(swaggerDoc)
-                .param("name", "API1")
-                .param("version", "0.1");
+                .file(swaggerDoc);
         mockMvc.perform(builder).andExpect(status().isCreated());
     }
 
     @Test
     public void createDuplicateApi() throws Exception {
-        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", "{\"openapi\":\"3.0.0\"}".getBytes());
+        String spec = validAPISpec;
+        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", spec.getBytes());
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
-                .file(swaggerDoc)
-                .param("name", "API1")
-                .param("version", "0.1");
+                .file(swaggerDoc);
         mockMvc.perform(builder).andExpect(status().isCreated());
         mockMvc.perform(builder).andExpect(status().isConflict());
     }
 
     @Test
     public void getSwaggerDocument() throws Exception {
-        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", "{\"openapi\":\"3.0.0\"}".getBytes());
+
+        // Create API
+        String spec = validAPISpec;
+        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", spec.getBytes());
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
-                .file(swaggerDoc)
-                .param("name", "API1")
-                .param("version", "0.1");
+                .file(swaggerDoc);
         MvcResult postResult = mockMvc.perform(builder).andReturn();
         assertThat(postResult.getResponse().getStatus()).isEqualTo(201);
         DocumentContext documentContext = JsonPath.parse(postResult.getResponse().getContentAsString());
         String apiId = documentContext.read("$.id");
 
+        // Fetch Swagger doc
         MvcResult getResult = mockMvc.perform(get("/apis/" + apiId + "/swaggerDoc")).andReturn();
         assertThat(getResult.getResponse().getContentAsString()).isEqualTo(new String(swaggerDoc.getBytes(), "UTF-8"));
     }
@@ -133,21 +155,35 @@ public class ApiControllerTest {
 
     @Test
     public void listApplicationApis() throws Exception {
-        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", "{\"openapi\":\"3.0.0\"}".getBytes());
+        String spec1v1 = validAPISpec
+                .replaceFirst("title:.*", "title: A")
+                .replaceFirst("version.*", "version: 1.0");
+
+        String spec1v2 = validAPISpec
+                .replaceFirst("title:.*", "title: A")
+                .replaceFirst("version.*", "version: 2.0");
+
+        String spec2v1 = validAPISpec
+                .replaceFirst("title:.*", "title: B")
+                .replaceFirst("version.*", "version: 1.0");
+
+        MockMultipartFile swaggerDoc1v1 = new MockMultipartFile("swaggerDoc", spec1v1.getBytes());
+        MockMultipartFile swaggerDoc1v2 = new MockMultipartFile("swaggerDoc", spec1v2.getBytes());
+        MockMultipartFile swaggerDoc2v1 = new MockMultipartFile("swaggerDoc", spec2v1.getBytes());
+
+        // Create A.V1
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
-                .file(swaggerDoc)
-                .param("name", "API1")
-                .param("version", "0.1");
+                .file(swaggerDoc1v1);
         mockMvc.perform(builder).andExpect(status().isCreated());
+
+        // Create A.V2
         builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
-                .file(swaggerDoc)
-                .param("name", "API1")
-                .param("version", "0.2");
+                .file(swaggerDoc1v2);
         mockMvc.perform(builder).andExpect(status().isCreated());
+
+        // Create B.V1
         builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
-                .file(swaggerDoc)
-                .param("name", "API2")
-                .param("version", "0.1");
+                .file(swaggerDoc2v1);
         mockMvc.perform(builder).andExpect(status().isCreated());
 
         mockMvc.perform(get("/applications/1/apis"))

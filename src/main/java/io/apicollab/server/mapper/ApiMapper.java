@@ -4,7 +4,10 @@ import io.apicollab.server.domain.Api;
 import io.apicollab.server.dto.ApiDTO;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -18,6 +21,8 @@ public class ApiMapper {
                 .apiId(api.getId())
                 .name(api.getName())
                 .version(api.getVersion())
+                .description(api.getDescription())
+                .tags(api.getTags())
                 .build();
     }
 
@@ -32,6 +37,12 @@ public class ApiMapper {
         if(apiDTO == null) {
             return null;
         }
-        return Api.builder().name(apiDTO.getName()).version(apiDTO.getVersion()).build();
+        return Api.builder()
+                .name(apiDTO.getName())
+                .version(apiDTO.getVersion())
+                .description(apiDTO.getDescription().substring(0, 255))
+                .swaggerDefinition(apiDTO.getSwaggerDefinition())
+                .tags(apiDTO.getTags())
+                .build();
     }
 }

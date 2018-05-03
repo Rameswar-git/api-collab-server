@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
  */
 
 @SuppressWarnings("serial")
-class APIException extends RuntimeException {
+public class APIException extends RuntimeException {
 
     @Getter
     protected final String error;
