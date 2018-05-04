@@ -40,7 +40,7 @@ public class ApiMapper {
         return Api.builder()
                 .name(apiDTO.getName())
                 .version(apiDTO.getVersion())
-                .description(apiDTO.getDescription().substring(0, 255))
+                .description(apiDTO.getDescription())
                 .swaggerDefinition(apiDTO.getSwaggerDefinition())
                 .tags(apiDTO.getTags())
                 .build();

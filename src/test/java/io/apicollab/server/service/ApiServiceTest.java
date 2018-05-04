@@ -59,6 +59,24 @@ public class ApiServiceTest {
     }
 
     @Test
+    public void descriptionTruncatedTo255Chars() {
+        String description = "looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo" +
+                "ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo" +
+                "ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo" +
+                "ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo" +
+                "ng description";
+        // Create an application
+        Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
+        Application dbApplication = applicationService.create(application);
+        Api api = Api.builder().name("Api_1").version("0.1").swaggerDefinition("{}").description(description).build();
+        Api dbApi = applicationService.createNewApiVersion(dbApplication.getId(), api);
+
+        // Retrieve created application
+        dbApi = apiService.findOne(dbApi.getId());
+        assertThat(dbApi.getDescription().length()).isEqualTo(255);
+    }
+
+    @Test
     public void createDuplicate() {
         // Create an application
         Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
