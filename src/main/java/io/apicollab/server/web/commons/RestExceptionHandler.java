@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -153,5 +154,14 @@ class RestExceptionHandler {
                 .collect(Collectors.toList());
         APIValidationException validationException = new APIValidationException(ex.getMessage(), APIErrors.VALIDATION_ERROR.name(), APIErrors.VALIDATION_ERROR.status, validationErrors);
         return handleAPIValidationException(validationException);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Object> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        if (log.isErrorEnabled()) {
+            log.error("Uncaught Exception on traceID: {}" + tracer.currentSpan().context().traceIdString(), ex);
+        }
+        APIException apiException = new APIException(ex.getMessage(), APIErrors.VALIDATION_ERROR.toString(), APIErrors.VALIDATION_ERROR.status);
+        return handleAPIException(apiException);
     }
 }

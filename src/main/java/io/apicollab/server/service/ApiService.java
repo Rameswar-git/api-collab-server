@@ -29,6 +29,13 @@ public class ApiService {
         return apiRepository.save(api);
     }
 
+    @Transactional
+    public void update(String apiId, Api api) {
+        Api dbApi = findOne(apiId);
+        dbApi.setStatus(api.getStatus());
+        apiRepository.save(dbApi);
+    }
+
     public Api findOne(String id) {
         Optional<Api> dbApiHolder = apiRepository.findOne(Example.of(Api.builder().id(id).build()));
         return dbApiHolder.orElseThrow(NotFoundException::new);

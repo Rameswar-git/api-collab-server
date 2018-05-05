@@ -1,14 +1,17 @@
 package io.apicollab.server.controller;
 
+import io.apicollab.server.constant.ApiStatus;
 import io.apicollab.server.domain.Api;
 import io.apicollab.server.dto.ApiDTO;
 import io.apicollab.server.dto.ApiListDTO;
+import io.apicollab.server.dto.ApiUpdateInput;
 import io.apicollab.server.exception.ApiPortalException;
 import io.apicollab.server.mapper.ApiMapper;
 import io.apicollab.server.service.ApiService;
 import io.apicollab.server.service.ApiSpecParserService;
 import io.apicollab.server.service.ApplicationService;
 import io.apicollab.server.web.commons.APIErrors;
+import io.apicollab.server.web.commons.APIException;
 import io.apicollab.server.web.commons.APIValidationException;
 import io.apicollab.server.web.commons.ValidationResultDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +25,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -64,9 +70,23 @@ public class ApiController {
             throw new APIValidationException(APIErrors.VALIDATION_ERROR, asList(resultDTO));
         }
         ApiDTO apiDTO = ApiSpecParserService.parse(extractFileContent(swaggerDoc));
+        apiDTO.setStatus(ApiStatus.BETA.toString());
         validateDTO(apiDTO);
         Api api = apiMapper.toEntity(apiDTO);
         return apiMapper.toDto(applicationService.createNewApiVersion(applicationId, api));
+    }
+
+    @PutMapping(value = "/apis/{apiId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void update(@PathVariable String apiId,
+                         @RequestBody @Valid ApiUpdateInput apiDTO) {
+        Api api = null;
+        try {
+            api = Api.builder().status(ApiStatus.valueOf(apiDTO.getStatus())).build();
+        } catch(IllegalArgumentException ex) {
+            throw new APIException("Invalid status code provided", APIErrors.VALIDATION_ERROR.toString(), APIErrors.VALIDATION_ERROR.status);
+        }
+        apiService.update(apiId, api);
     }
 
     @GetMapping("/apis/{apiId}/swaggerDoc")

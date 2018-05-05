@@ -1,6 +1,7 @@
 package io.apicollab.server.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.apicollab.server.constant.ApiStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,6 +30,9 @@ public class ApiDTO implements Serializable {
 
     @NotBlank
     private String description;
+
+    @NotBlank
+    private String status;
 
     private List<String> tags;
 

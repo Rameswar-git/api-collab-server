@@ -1,5 +1,8 @@
 package io.apicollab.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import io.apicollab.server.repository.ApiRepository;
@@ -10,6 +13,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -24,6 +28,7 @@ import java.util.Arrays;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,6 +41,9 @@ public class ApiControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private ApiRepository apiRepository;
@@ -128,6 +136,68 @@ public class ApiControllerTest {
                 .file(swaggerDoc);
         mockMvc.perform(builder).andExpect(status().isCreated());
         mockMvc.perform(builder).andExpect(status().isConflict());
+    }
+
+    @Test
+    public void updateApiStatus() throws Exception {
+        // Create
+        String spec = validAPISpec;
+        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", spec.getBytes());
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
+                .file(swaggerDoc);
+        MvcResult mvcResult = mockMvc.perform(builder).andExpect(status().isCreated()).andReturn();
+        JsonNode jsonNode = objectMapper.readTree(mvcResult.getResponse().getContentAsString());
+        // Update
+        mockMvc.perform(put("/apis/" + jsonNode.get("id").asText())
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content("{\"status\":\"STABLE\"}"))
+                .andExpect(status().isNoContent());
+        // Verify
+        mockMvc.perform(get("/apis/" + jsonNode.get("id").asText()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("STABLE")))
+                .andExpect(jsonPath("$.name", is(jsonNode.get("name").asText())))
+                .andExpect(jsonPath("$.version", is(jsonNode.get("version").asText())))
+                .andExpect(jsonPath("$.description", is(jsonNode.get("description").asText())))
+                .andExpect(jsonPath("$.tags.*", hasSize(1)));
+    }
+
+    @Test
+    public void updateApiWithInvalidStatus() throws Exception {
+        // Create
+        String spec = validAPISpec;
+        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", spec.getBytes());
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
+                .file(swaggerDoc);
+        MvcResult mvcResult = mockMvc.perform(builder).andExpect(status().isCreated()).andReturn();
+        JsonNode jsonNode = objectMapper.readTree(mvcResult.getResponse().getContentAsString());
+        // Update
+        mockMvc.perform(put("/apis/" + jsonNode.get("id").asText())
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content("{\"status\":\"INVALID\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void updateApiWithNoBody() throws Exception {
+        // Create
+        String spec = validAPISpec;
+        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", spec.getBytes());
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
+                .file(swaggerDoc);
+        MvcResult mvcResult = mockMvc.perform(builder).andExpect(status().isCreated()).andReturn();
+        JsonNode jsonNode = objectMapper.readTree(mvcResult.getResponse().getContentAsString());
+        // Update
+        mockMvc.perform(put("/apis/" + jsonNode.get("id").asText()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void updateNonExistingApi() throws Exception {
+        mockMvc.perform(put("/apis/12345")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content("{\"status\":\"STABLE\"}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package io.apicollab.server.service;
 
+import io.apicollab.server.constant.ApiStatus;
 import io.apicollab.server.domain.Api;
 import io.apicollab.server.domain.Application;
 import io.apicollab.server.exception.ApiExistsException;
@@ -46,7 +47,7 @@ public class ApiServiceTest {
         // Create an application
         Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
         Application dbApplication = applicationService.create(application);
-        Api api = Api.builder().name("Api_1").version("0.1").swaggerDefinition("{}").description("a description").build();
+        Api api = Api.builder().name("Api_1").version("0.1").swaggerDefinition("{}").description("a description").status(ApiStatus.BETA).build();
         Api dbApi = applicationService.createNewApiVersion(dbApplication.getId(), api);
 
         // Retrieve created application
@@ -54,6 +55,8 @@ public class ApiServiceTest {
         assertThat(dbApi.getId()).isNotNull();
         assertThat(dbApi.getName()).isEqualTo(api.getName());
         assertThat(dbApi.getVersion()).isEqualTo(api.getVersion());
+        assertThat(dbApi.getDescription()).isEqualTo(api.getDescription());
+        assertThat(dbApi.getStatus()).isEqualTo(ApiStatus.BETA);
         assertThat(dbApi.getSwaggerDefinition()).isEqualTo(api.getSwaggerDefinition());
         assertThat(dbApi.getApplication().getId()).isEqualTo(dbApplication.getId());
     }
@@ -68,7 +71,7 @@ public class ApiServiceTest {
         // Create an application
         Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
         Application dbApplication = applicationService.create(application);
-        Api api = Api.builder().name("Api_1").version("0.1").swaggerDefinition("{}").description(description).build();
+        Api api = Api.builder().name("Api_1").version("0.1").swaggerDefinition("{}").description(description).status(ApiStatus.BETA).build();
         Api dbApi = applicationService.createNewApiVersion(dbApplication.getId(), api);
 
         // Retrieve created application
@@ -81,11 +84,11 @@ public class ApiServiceTest {
         // Create an application
         Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
         Application dbApplication = applicationService.create(application);
-        Api api = Api.builder().name("Api_1").version("0.1").description("a description").swaggerDefinition("{}").build();
+        Api api = Api.builder().name("Api_1").version("0.1").description("a description").status(ApiStatus.BETA).swaggerDefinition("{}").build();
         applicationService.createNewApiVersion(dbApplication.getId(), api);
 
         // Create another Api with same name and version
-        Api anotherApi = Api.builder().name("Api_1").version("0.1").description("another description").swaggerDefinition("{}").build();
+        Api anotherApi = Api.builder().name("Api_1").version("0.1").description("another description").status(ApiStatus.BETA).swaggerDefinition("{}").build();
         assertThatExceptionOfType(ApiExistsException.class).isThrownBy(() -> applicationService.createNewApiVersion(application.getId(), anotherApi));
     }
 
@@ -94,11 +97,11 @@ public class ApiServiceTest {
         // Create an application
         Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
         Application dbApplication = applicationService.create(application);
-        Api api = Api.builder().name("Api_1").version("0.1").description("a description").swaggerDefinition("{}").build();
+        Api api = Api.builder().name("Api_1").version("0.1").description("a description").status(ApiStatus.BETA).swaggerDefinition("{}").build();
         applicationService.createNewApiVersion(dbApplication.getId(), api);
 
         // Create another Api with another name but same version
-        Api anotherApi = Api.builder().name("Api_2").version("0.1").description("a description").swaggerDefinition("{}").build();
+        Api anotherApi = Api.builder().name("Api_2").version("0.1").description("a description").status(ApiStatus.BETA).swaggerDefinition("{}").build();
         applicationService.createNewApiVersion(dbApplication.getId(), anotherApi);
         assertThat(apiRepository.count()).isEqualTo(2);
     }
@@ -108,11 +111,11 @@ public class ApiServiceTest {
         // Create an application
         Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
         Application dbApplication = applicationService.create(application);
-        Api api = Api.builder().name("Api_1").version("0.1").description("a description").swaggerDefinition("{}").build();
+        Api api = Api.builder().name("Api_1").version("0.1").description("a description").status(ApiStatus.BETA).swaggerDefinition("{}").build();
         applicationService.createNewApiVersion(dbApplication.getId(), api);
 
         // Create another Api with another name but same version
-        Api anotherApi = Api.builder().name("Api_1").version("0.2").description("a description").swaggerDefinition("{}").build();
+        Api anotherApi = Api.builder().name("Api_1").version("0.2").description("a description").status(ApiStatus.BETA).swaggerDefinition("{}").build();
         applicationService.createNewApiVersion(dbApplication.getId(), anotherApi);
         assertThat(apiRepository.count()).isEqualTo(2);
     }
@@ -122,7 +125,7 @@ public class ApiServiceTest {
         // Create an application
         Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
         Application dbApplication = applicationService.create(application);
-        Api api = Api.builder().name("Api_1").version("0.1").description("a description").tags(asList("tag1")).swaggerDefinition("{}").build();
+        Api api = Api.builder().name("Api_1").version("0.1").description("a description").status(ApiStatus.BETA).tags(asList("tag1")).swaggerDefinition("{}").build();
         applicationService.createNewApiVersion(dbApplication.getId(), api);
         assertThat(apiRepository.count()).isEqualTo(1);
 
@@ -131,4 +134,34 @@ public class ApiServiceTest {
         assertThat(api2).isNotNull();
         assertThat(api2.getTags()).isNotEmpty();
     }
+
+    @Test
+    public void updateApiStatus() {
+        // Create an application
+        Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
+        Application dbApplication = applicationService.create(application);
+        Api api = Api.builder().name("Api_1").version("0.1").description("a description").status(ApiStatus.BETA).tags(asList("tag1")).swaggerDefinition("{}").build();
+        Api dbApi = applicationService.createNewApiVersion(dbApplication.getId(), api);
+        // Verify successful creation
+        assertThat(apiRepository.count()).isEqualTo(1);
+
+        Api toBeUpdated = Api.builder()
+                .name("Updated name")
+                .version("0.2")
+                .description("updated description")
+                .status(ApiStatus.STABLE)
+                .tags(asList("tag1", "tag2"))
+                .swaggerDefinition("{\"key\":\"value\"}").build();
+        // Update
+        apiService.update(dbApi.getId(), toBeUpdated);
+        // Verify only status update
+        dbApi = apiService.findOne(dbApi.getId());
+        assertThat(dbApi.getStatus()).isEqualTo(toBeUpdated.getStatus());
+        assertThat(dbApi.getName()).isEqualTo(api.getName());
+        assertThat(dbApi.getVersion()).isEqualTo(api.getVersion());
+        assertThat(dbApi.getDescription()).isEqualTo(api.getDescription());
+        assertThat(dbApi.getTags()).isEqualTo(api.getTags());
+        assertThat(dbApi.getSwaggerDefinition()).isEqualTo(api.getSwaggerDefinition());
+    }
+
 }

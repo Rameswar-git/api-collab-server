@@ -1,5 +1,6 @@
 package io.apicollab.server.domain;
 
+import io.apicollab.server.constant.ApiStatus;
 import io.apicollab.server.mapper.ApiTagsConverter;
 import lombok.*;
 
@@ -25,24 +26,34 @@ public class Api extends BaseEntity {
     @Column(nullable = false, length = 255)
     private String description;
 
-    @Column()
+    @Column
     @Convert(converter = ApiTagsConverter.class)
     private List<String> tags;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ApiStatus status;
 
     @Column(nullable = false, columnDefinition = "CLOB")
     @Lob
     @Basic(fetch = FetchType.LAZY)
     private String swaggerDefinition;
+
     @ManyToOne
     private Application application;
 
     @Builder
-    private Api(String id, String name, String version, String swaggerDefinition, List<String> tags) {
+    private Api(String id, String name, String version, String swaggerDefinition, List<String> tags, ApiStatus status) {
         super(id);
         this.name = name;
         this.version = version;
         this.swaggerDefinition = swaggerDefinition;
         this.tags = tags;
+        this.status = status;
+
+        if(this.status == null) {
+            this.status = ApiStatus.BETA;
+        }
     }
 
     @PrePersist

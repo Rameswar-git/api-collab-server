@@ -1,5 +1,6 @@
 package io.apicollab.server.mapper;
 
+import io.apicollab.server.constant.ApiStatus;
 import io.apicollab.server.domain.Api;
 import io.apicollab.server.dto.ApiDTO;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,7 @@ public class ApiMapper {
                 .name(api.getName())
                 .version(api.getVersion())
                 .description(api.getDescription())
+                .status(api.getStatus().toString())
                 .tags(api.getTags())
                 .build();
     }
@@ -41,6 +43,7 @@ public class ApiMapper {
                 .name(apiDTO.getName())
                 .version(apiDTO.getVersion())
                 .description(apiDTO.getDescription())
+                .status(ApiStatus.valueOf(apiDTO.getStatus()))
                 .swaggerDefinition(apiDTO.getSwaggerDefinition())
                 .tags(apiDTO.getTags())
                 .build();
