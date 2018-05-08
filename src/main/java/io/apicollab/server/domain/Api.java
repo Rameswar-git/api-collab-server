@@ -3,6 +3,10 @@ package io.apicollab.server.domain;
 import io.apicollab.server.constant.ApiStatus;
 import io.apicollab.server.mapper.ApiTagsConverter;
 import lombok.*;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.FieldBridge;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.bridge.builtin.EnumBridge;
 
 import javax.persistence.*;
 import java.util.List;
@@ -13,6 +17,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = {"id"}, callSuper = true)
+@ToString(of = {"id", "name"})
+@Indexed
 public class Api extends BaseEntity {
 
     private static final long serialVersionUID = 8281554038825109184L;
@@ -32,11 +38,13 @@ public class Api extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Field(bridge=@FieldBridge(impl=EnumBridge.class))
     private ApiStatus status;
 
     @Column(nullable = false, columnDefinition = "CLOB")
     @Lob
     @Basic(fetch = FetchType.LAZY)
+    @Field()
     private String swaggerDefinition;
 
     @ManyToOne

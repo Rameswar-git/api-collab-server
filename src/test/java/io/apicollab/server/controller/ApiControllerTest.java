@@ -2,7 +2,6 @@ package io.apicollab.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import io.apicollab.server.repository.ApiRepository;
@@ -259,5 +258,75 @@ public class ApiControllerTest {
         mockMvc.perform(get("/applications/1/apis"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.apis.*", hasSize(3)));
+    }
+
+    @Test
+    public void listAllApis() throws Exception {
+        String spec1v1 = validAPISpec
+                .replaceFirst("title:.*", "title: Fruits API")
+                .replaceFirst("version.*", "version: 1.0")
+                .replaceFirst("description.*", "description: Banana apples oranges are cool");
+
+        String spec2v1 = validAPISpec
+                .replaceFirst("title:.*", "title: Space API")
+                .replaceFirst("version.*", "version: 1.0")
+                .replaceFirst("description.*", "description: Space time planets rockets");
+
+        MockMultipartFile swaggerDoc1v1 = new MockMultipartFile("swaggerDoc", spec1v1.getBytes());
+        MockMultipartFile swaggerDoc2v1 = new MockMultipartFile("swaggerDoc", spec2v1.getBytes());
+
+        // Create A.V1
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
+                .file(swaggerDoc1v1);
+        mockMvc.perform(builder).andExpect(status().isCreated());
+
+        // Create A.V2
+        builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
+                .file(swaggerDoc2v1);
+        mockMvc.perform(builder).andExpect(status().isCreated());
+
+        // Fetch All
+        mockMvc.perform(get("/apis"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.apis.*", hasSize(2)));
+
+    }
+
+    @Test
+    public void searchApis() throws Exception {
+        String spec1v1 = validAPISpec
+                .replaceFirst("title:.*", "title: Fruits API")
+                .replaceFirst("version.*", "version: 1.0")
+                .replaceFirst("description.*", "description: Banana apples oranges are cool");
+
+        String spec2v1 = validAPISpec
+                .replaceFirst("title:.*", "title: Space API")
+                .replaceFirst("version.*", "version: 1.0")
+                .replaceFirst("description.*", "description: Space time planets rockets");
+
+        MockMultipartFile swaggerDoc1v1 = new MockMultipartFile("swaggerDoc", spec1v1.getBytes());
+        MockMultipartFile swaggerDoc2v1 = new MockMultipartFile("swaggerDoc", spec2v1.getBytes());
+
+        // Create A.V1
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
+                .file(swaggerDoc1v1);
+        mockMvc.perform(builder).andExpect(status().isCreated());
+
+        // Create A.V2
+        builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
+                .file(swaggerDoc2v1);
+        mockMvc.perform(builder).andExpect(status().isCreated());
+
+        // Fetch All
+        mockMvc.perform(get("/apis/search?query=apples"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.apis.*", hasSize(1)))
+                .andExpect(jsonPath("$.apis.[0].name").value("Fruits API"));
+
+
+        mockMvc.perform(get("/apis/search?query=space"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.apis.*", hasSize(1)))
+                .andExpect(jsonPath("$.apis.[0].name").value("Space API"));
     }
 }

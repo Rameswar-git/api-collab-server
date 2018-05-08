@@ -15,6 +15,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -162,6 +163,27 @@ public class ApiServiceTest {
         assertThat(dbApi.getDescription()).isEqualTo(api.getDescription());
         assertThat(dbApi.getTags()).isEqualTo(api.getTags());
         assertThat(dbApi.getSwaggerDefinition()).isEqualTo(api.getSwaggerDefinition());
+    }
+
+    /**
+     * Get All to ensure Archived APIs are not returned.
+     */
+    @Test
+    public void getAllExcludesArchived() {
+        // Create an application
+        Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
+        Application dbApplication = applicationService.create(application);
+        Api api = Api.builder().name("Api_1").version("0.1").description("a description").status(ApiStatus.BETA).swaggerDefinition("{}").build();
+        applicationService.createNewApiVersion(dbApplication.getId(), api);
+        
+        // Create another Api with another name but same version
+        Api anotherApi = Api.builder().name("Api_1").version("0.2").description("a description").status(ApiStatus.ARCHIVED).swaggerDefinition("{}").build();
+        applicationService.createNewApiVersion(dbApplication.getId(), anotherApi);
+        assertThat(apiRepository.count()).isEqualTo(2);
+        List<Api> results = apiService.getAll().stream().collect(Collectors.toList());
+        assertThat(results)
+                .allMatch(a -> a.getStatus() != ApiStatus.ARCHIVED);
+        assertThat(results).hasSize(1);
     }
 
 }

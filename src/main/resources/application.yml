@@ -16,3 +16,23 @@ spring:
   jpa:
     generate-ddl: true
     show-sql: true
+
+hibernate:
+  search:
+    default:
+      directory_provider: filesystem
+      indexBase: "/var/lucene/indexes"
+
+spring:
+  jpa:
+    properties:
+      hibernate:
+        search:
+          default:
+            directory_provider: filesystem
+            indexBase: "/var/lucene/indexes"
+
+logging:
+  level:
+    org.hibernate.search: DEBUG
+    #org.springframework: DEBUG

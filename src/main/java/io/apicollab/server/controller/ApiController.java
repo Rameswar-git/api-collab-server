@@ -16,6 +16,7 @@ import io.apicollab.server.web.commons.APIValidationException;
 import io.apicollab.server.web.commons.ValidationResultDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -26,8 +27,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -55,6 +54,17 @@ public class ApiController {
         applicationService.findById(applicationId);
         return ApiListDTO.builder().apis(apiMapper.toDtos(apiService.findByApplication(applicationId))).build();
     }
+
+    @GetMapping("/apis")
+    public ApiListDTO getAllApis() {
+        return ApiListDTO.builder().apis(apiMapper.toDtos(apiService.getAll())).build();
+    }
+
+    @GetMapping("apis/search")
+    public ApiListDTO searchApis(@RequestParam(name = "query") String query) {
+        return ApiListDTO.builder().apis(apiMapper.toDtos(apiService.search(query))).build();
+    }
+
 
     @GetMapping("/apis/{apiId}")
     public ApiDTO getApplicationApi(@PathVariable String apiId) {
