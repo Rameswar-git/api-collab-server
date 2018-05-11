@@ -3,6 +3,7 @@ package io.apicollab.server.domain;
 import io.apicollab.server.constant.ApiStatus;
 import io.apicollab.server.mapper.ApiTagsConverter;
 import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
@@ -16,12 +17,17 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = {"id"}, callSuper = true)
+@EqualsAndHashCode(of = {"id"})
 @ToString(of = {"id", "name"})
 @Indexed
 public class Api extends BaseEntity {
 
     private static final long serialVersionUID = 8281554038825109184L;
+
+    @Id
+    @GeneratedValue(generator = "system-uuid")
+    @GenericGenerator(name = "system-uuid", strategy = "uuid2")
+    protected String id;
 
     @Column(nullable = false)
     private String name;
@@ -49,20 +55,6 @@ public class Api extends BaseEntity {
 
     @ManyToOne
     private Application application;
-
-    @Builder
-    private Api(String id, String name, String version, String swaggerDefinition, List<String> tags, ApiStatus status) {
-        super(id);
-        this.name = name;
-        this.version = version;
-        this.swaggerDefinition = swaggerDefinition;
-        this.tags = tags;
-        this.status = status;
-
-        if(this.status == null) {
-            this.status = ApiStatus.BETA;
-        }
-    }
 
     @PrePersist
     @PreUpdate

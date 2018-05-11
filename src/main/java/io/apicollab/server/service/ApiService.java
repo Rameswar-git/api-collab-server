@@ -48,7 +48,7 @@ public class ApiService {
     }
 
     public Api findOne(String id) {
-        Optional<Api> dbApiHolder = apiRepository.findOne(Example.of(Api.builder().id(id).build()));
+        Optional<Api> dbApiHolder = apiRepository.findById(id);
         return dbApiHolder.orElseThrow(NotFoundException::new);
     }
 

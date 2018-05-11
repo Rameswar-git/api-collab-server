@@ -122,6 +122,23 @@ public class ApiServiceTest {
     }
 
     @Test
+    public void createMultipleVersionsGetSwagger() {
+        // Create an application
+        Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
+        Application dbApplication = applicationService.create(application);
+        Api api = Api.builder().name("Api_1").version("0.1").description("a description").status(ApiStatus.BETA).swaggerDefinition("{}").build();
+        applicationService.createNewApiVersion(dbApplication.getId(), api);
+
+        // Create another Api with another name but same version
+        Api anotherApi = Api.builder().name("Api_1").version("0.2").description("a description").status(ApiStatus.BETA).swaggerDefinition("{}").build();
+        applicationService.createNewApiVersion(dbApplication.getId(), anotherApi);
+        assertThat(apiRepository.count()).isEqualTo(2);
+
+        String spec = apiService.findOne(api.getId()).getSwaggerDefinition();
+        assertThat(spec).isNotBlank();
+    }
+
+    @Test
     public void createAPIWithTags() {
         // Create an application
         Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
