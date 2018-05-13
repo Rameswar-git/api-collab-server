@@ -4,4 +4,4 @@ spring:
       hibernate:
         search:
           default:
-            directory_provider: ram
+            directory_provider: local-heap
