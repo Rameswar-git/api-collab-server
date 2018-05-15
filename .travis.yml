@@ -1,6 +1,18 @@
 language: java
-cache:
-  directories:
-  - "$HOME/.m2"
+
 jdk:
   - oraclejdk8
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.sonar/cache'
+
+addons:
+  sonarcloud:
+    organization: apicollab-github
+    token:
+      secure: ${SONAR_TOKEN}
+
+script:
+   - mvn org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar
