@@ -5,6 +5,7 @@ import io.apicollab.server.dto.ApplicationDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Component
@@ -23,7 +24,7 @@ public class ApplicationMapper {
 
     public Collection<ApplicationDTO> toDtos(Collection<Application> applications) {
         if (applications == null) {
-            return null;
+            return Collections.emptyList();
         }
         return applications.stream().map(this::toDto).collect(Collectors.toList());
     }

@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 class RestExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(RestExceptionHandler.class);
+    private static final String UNCAUGHT_EXCEPTION = "Uncaught Exception on traceID: {}";
 
     @Autowired
     private Tracer tracer;
@@ -116,7 +117,7 @@ class RestExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<Object> handleMethodArgumentNotValidException(NotFoundException ex) {
         if (log.isErrorEnabled()) {
-            log.error("Uncaught Exception on traceID: {}" + tracer.currentSpan().context().traceIdString(), ex);
+            log.error(UNCAUGHT_EXCEPTION + tracer.currentSpan().context().traceIdString(), ex);
         }
         return handleAPIException(new APIException(APIErrors.NOT_FOUND_ERROR));
     }
@@ -130,7 +131,7 @@ class RestExceptionHandler {
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<Object> handleUncaughtException(Exception ex) {
         if (log.isErrorEnabled()) {
-            log.error("Uncaught Exception on traceID: {}" + tracer.currentSpan().context().traceIdString(), ex);
+            log.error(UNCAUGHT_EXCEPTION + tracer.currentSpan().context().traceIdString(), ex);
         }
         return handleAPIException(new APIException(APIErrors.SERVER_ERROR));
     }
@@ -138,7 +139,7 @@ class RestExceptionHandler {
     @ExceptionHandler(ApiExistsException.class)
     public ResponseEntity<Object> handleApiExistsException(ApiExistsException ex) {
         if (log.isErrorEnabled()) {
-            log.error("Uncaught Exception on traceID: {}" + tracer.currentSpan().context().traceIdString(), ex);
+            log.error(UNCAUGHT_EXCEPTION + tracer.currentSpan().context().traceIdString(), ex);
         }
         return handleAPIException(new APIException(ex.getMessage(), APIErrors.CONFLICT_ERROR.name(), APIErrors.CONFLICT_ERROR.status));
     }
@@ -146,7 +147,7 @@ class RestExceptionHandler {
     @ExceptionHandler(ApiParsingException.class)
     public ResponseEntity<APIValidationExceptionDTO> handleApiParsingException(ApiParsingException ex) {
         if (log.isErrorEnabled()) {
-            log.error("Uncaught Exception on traceID: {}" + tracer.currentSpan().context().traceIdString(), ex);
+            log.error(UNCAUGHT_EXCEPTION + tracer.currentSpan().context().traceIdString(), ex);
         }
         List<ValidationResultDTO> validationErrors = ex.getErrorMessages()
                 .stream()
@@ -159,7 +160,7 @@ class RestExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Object> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         if (log.isErrorEnabled()) {
-            log.error("Uncaught Exception on traceID: {}" + tracer.currentSpan().context().traceIdString(), ex);
+            log.error(UNCAUGHT_EXCEPTION + tracer.currentSpan().context().traceIdString(), ex);
         }
         APIException apiException = new APIException(ex.getMessage(), APIErrors.VALIDATION_ERROR.toString(), APIErrors.VALIDATION_ERROR.status);
         return handleAPIException(apiException);

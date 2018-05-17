@@ -31,7 +31,7 @@ public class HibernateSearchInitializer implements ApplicationListener<Applicati
             fullTextEntityManager.createIndexer().startAndWait();
         } catch (InterruptedException e) {
             log.error("Failed to index search engine", e);
+            Thread.currentThread().interrupt();
         }
-        return;
     }
 }

@@ -2,6 +2,7 @@ package io.apicollab.server.mapper;
 
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -11,7 +12,7 @@ import static java.util.Arrays.asList;
  */
 @Converter
 public class ApiTagsConverter implements AttributeConverter<List<String>, String> {
-    private static String TAG_DELIMITER = ",";
+    private static final String TAG_DELIMITER = ",";
 
     @Override
     public String convertToDatabaseColumn(List<String> tags) {
@@ -21,7 +22,7 @@ public class ApiTagsConverter implements AttributeConverter<List<String>, String
 
     @Override
     public List<String> convertToEntityAttribute(String s) {
-        if(s == null) return null;
+        if(s == null) return Collections.emptyList();
         return asList(s.split(TAG_DELIMITER));
     }
 }

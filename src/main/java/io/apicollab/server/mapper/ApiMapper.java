@@ -5,10 +5,8 @@ import io.apicollab.server.domain.Api;
 import io.apicollab.server.dto.ApiDTO;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Component
@@ -30,7 +28,7 @@ public class ApiMapper {
 
     public Collection<ApiDTO> toDtos(Collection<Api> apis) {
         if (apis == null) {
-            return null;
+            return Collections.emptyList();
         }
         return apis.stream().map(this::toDto).collect(Collectors.toList());
     }

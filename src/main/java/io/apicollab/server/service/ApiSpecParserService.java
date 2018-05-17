@@ -3,6 +3,7 @@ package io.apicollab.server.service;
 import io.apicollab.server.dto.ApiDTO;
 import io.apicollab.server.exception.ApiParsingException;
 import io.swagger.models.Swagger;
+import io.swagger.models.Tag;
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.parser.SwaggerParser;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -46,12 +47,12 @@ public class ApiSpecParserService {
     private ApiDTO parseOAS(String oasString){
 
         SwaggerParseResult result = new OpenAPIParser().readContents(oasString, null,  null);
-        if(result.getOpenAPI()== null || result.getMessages().size() > 0){
+        if(result.getOpenAPI()== null || !result.getMessages().isEmpty()){
             throw new ApiParsingException("Failed to parse OAS file", result.getMessages());
         }else{
             OpenAPI openAPI = result.getOpenAPI();
             Info info = openAPI.getInfo();
-            List<String> tags = openAPI.getTags() == null ? null :  openAPI.getTags().stream().map(t-> t.getName()).collect(Collectors.toList());
+            List<String> tags = openAPI.getTags() == null ? null :  openAPI.getTags().stream().map(io.swagger.v3.oas.models.tags.Tag::getName).collect(Collectors.toList());
 
             // Check basic information
             String title = info.getTitle();
@@ -74,7 +75,7 @@ public class ApiSpecParserService {
             throw new IllegalArgumentException("Failed to parse swagger file");
         }else{
             io.swagger.models.Info info = swagger.getInfo();
-            List<String> tags = swagger.getTags() == null ? null :  swagger.getTags().stream().map(t-> t.getName()).collect(Collectors.toList());
+            List<String> tags = swagger.getTags() == null ? null :  swagger.getTags().stream().map(Tag::getName).collect(Collectors.toList());
             return ApiDTO.builder()
                     .name(info.getTitle())
                     .version(info.getVersion())

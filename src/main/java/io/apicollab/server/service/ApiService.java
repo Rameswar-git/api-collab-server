@@ -8,7 +8,6 @@ import io.apicollab.server.exception.NotFoundException;
 import io.apicollab.server.repository.ApiRepository;
 import io.apicollab.server.repository.ApiSearchRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

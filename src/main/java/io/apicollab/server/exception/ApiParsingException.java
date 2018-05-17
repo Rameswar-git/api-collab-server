@@ -7,7 +7,7 @@ import java.util.List;
 public class ApiParsingException extends RuntimeException {
 
     @Getter
-    private List<String> errorMessages;
+    private final List<String> errorMessages;
     public ApiParsingException(String message, List<String> errorMessages){
         super(message);
         this.errorMessages = errorMessages;
