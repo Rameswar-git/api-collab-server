@@ -25,6 +25,20 @@ public class ApiSpecParserServiceTest {
     }
 
     @Test
+    public void emptySpecThrowsApiParsingException() {
+        assertThatExceptionOfType(ApiParsingException.class).isThrownBy(() -> {
+           ApiSpecParserService.parse("");
+        });
+    }
+
+    @Test
+    public void blankSpecThrowsApiParsingException() {
+        assertThatExceptionOfType(ApiParsingException.class).isThrownBy(() -> {
+            ApiSpecParserService.parse("");
+        });
+    }
+
+    @Test
     public void parseValid(){
         ApiDTO dto = ApiSpecParserService.parse(validSpec);
         assertThat(dto.getName()).isNotBlank();
@@ -33,6 +47,18 @@ public class ApiSpecParserServiceTest {
         assertThat(dto.getTags()).isNotEmpty();
         assertThat(dto.getSwaggerDefinition()).isNotBlank();
     }
+
+    @Test
+    public void parseValidSwagger(){
+        String validSwaggerSpec = getFile("apis/valid_swagger.yml");
+        ApiDTO dto = ApiSpecParserService.parse(validSwaggerSpec);
+        assertThat(dto.getName()).isNotBlank();
+        assertThat(dto.getVersion()).isNotBlank();
+        assertThat(dto.getDescription()).isNotBlank();
+        assertThat(dto.getTags()).isNotEmpty();
+        assertThat(dto.getSwaggerDefinition()).isNotBlank();
+    }
+
     @Test
     public void parseWithMissingRequiredFields(){
         ApiDTO dto = ApiSpecParserService.parse(incompleteSpec);
@@ -42,10 +68,19 @@ public class ApiSpecParserServiceTest {
         assertThat(dto.getDescription()).isNullOrEmpty();
         assertThat(dto.getVersion()).isNullOrEmpty();
     }
+
     @Test
     public void parseInvalidFormat(){
         assertThatExceptionOfType(ApiParsingException.class).isThrownBy(
                 () -> ApiSpecParserService.parse(invalidSpec)
+        );
+    }
+
+    @Test
+    public void parseInvalidSwaggerSpec(){
+        String invalidSwaggerSpec = getFile("apis/invalid_swagger.yml");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
+                () -> ApiSpecParserService.parse(invalidSwaggerSpec)
         );
     }
 

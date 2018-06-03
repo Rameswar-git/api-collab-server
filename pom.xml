@@ -16,6 +16,10 @@
 
     <properties>
         <swagger-ui.version>3.13.0</swagger-ui.version>
+        <sonar.exclusions>
+            **/ApiPortalApplication.java,
+            **/config/*.java
+        </sonar.exclusions>
     </properties>
 
     <dependencyManagement>
