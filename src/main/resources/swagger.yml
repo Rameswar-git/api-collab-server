@@ -2,6 +2,7 @@ openapi: "3.0.0"
 info:
   version: 1.0.0
   title: API Collab  - Server
+  description: The API for interacting with API Collab Server. You can create applications and add associated API specifications.
   license:
     name: MIT
 servers:
