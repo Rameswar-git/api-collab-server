@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -201,7 +202,6 @@ public class ApiControllerTest {
 
     @Test
     public void getSwaggerDocument() throws Exception {
-
         // Create API
         String spec = validAPISpec;
         MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", spec.getBytes());
@@ -328,5 +328,27 @@ public class ApiControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.apis.*", hasSize(1)))
                 .andExpect(jsonPath("$.apis.[0].name").value("Space API"));
+    }
+
+    @Test
+    public void deleteNonExistingApi() throws Exception {
+        mockMvc.perform(delete("/apis/12345")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void deleteApi() throws Exception {
+        // Create
+        String spec = validAPISpec;
+        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", spec.getBytes());
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart("/applications/1/apis")
+                .file(swaggerDoc);
+        MvcResult mvcResult = mockMvc.perform(builder).andExpect(status().isCreated()).andReturn();
+        JsonNode jsonNode = objectMapper.readTree(mvcResult.getResponse().getContentAsString());
+        // Retrieve
+        mockMvc.perform(get("/apis/" + jsonNode.get("id").asText())).andExpect(status().isOk());
+        // Delete
+        mockMvc.perform(delete("/apis/" + jsonNode.get("id").asText())).andExpect(status().isNoContent());
+        // Confirm
+        mockMvc.perform(get("/apis/" + jsonNode.get("id").asText())).andExpect(status().isNotFound());
     }
 }

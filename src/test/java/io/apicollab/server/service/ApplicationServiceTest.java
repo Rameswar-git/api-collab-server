@@ -2,6 +2,7 @@ package io.apicollab.server.service;
 
 import io.apicollab.server.domain.Application;
 import io.apicollab.server.exception.ApplicationExistsException;
+import io.apicollab.server.exception.NotFoundException;
 import io.apicollab.server.repository.ApplicationRepository;
 import org.junit.After;
 import org.junit.Test;
@@ -63,5 +64,25 @@ public class ApplicationServiceTest {
         applicationService.create(application2);
 
         assertThat(applicationRepository.count()).isEqualTo(2);
+    }
+
+    @Test
+    public void deleteNonExistingApplication() {
+        assertThatExceptionOfType(NotFoundException.class).isThrownBy(() -> applicationService.delete("invalid_id"));
+    }
+
+    @Test
+    public void deleteApplication() {
+        // Create application
+        Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
+        Application dbApplication = applicationService.create(application);
+        // Retrieve application
+        dbApplication = applicationService.findById(dbApplication.getId());
+        assertThat(dbApplication).isNotNull();
+        // Delete application
+        applicationService.delete(dbApplication.getId());
+        // Retrieve application
+        String applicationId = dbApplication.getId();
+        assertThatExceptionOfType(NotFoundException.class).isThrownBy(() -> applicationService.findById(applicationId));
     }
 }

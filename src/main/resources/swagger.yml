@@ -92,6 +92,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/Application"
 
+    delete:
+      summary: Delete an application
+      operationId: delete-application
+      tags:
+        - Applications
+      responses:
+        '404':
+          description: Application not found with provided identifier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '409':
+          description: Application linked to one or more Api
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /applications/{applicationId}/apis:
     parameters:
       - name: applicationId
@@ -216,6 +235,18 @@ paths:
                 $ref: "#/components/schemas/Api"
         default:
           description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete an api
+      operationId: delete-api
+      tags:
+        - APIs
+      responses:
+        '404':
+          description: Api not found with provided identifier
           content:
             application/json:
               schema:

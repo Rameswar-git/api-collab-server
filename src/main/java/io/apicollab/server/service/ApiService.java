@@ -23,12 +23,11 @@ public class ApiService {
 
     @Autowired
     private ApiRepository apiRepository;
-
     @Autowired
     private ApiSearchRepository searchRepository;
 
     List<ApiStatus> searchableStatusCodes = asList(ApiStatus.BETA, ApiStatus.STABLE, ApiStatus.DEPRECATED);
-
+    
     @Transactional
     public Api create(Application application, Api api) {
         Optional<Api> dbApiHolder = apiRepository.findByApplicationIdAndNameAndVersion(application.getId(), api.getName(), api.getVersion());
@@ -66,5 +65,11 @@ public class ApiService {
         return searchRepository.search(searchQuery, searchableStatusCodes);
     }
 
+    public void delete(String id) {
+        if (!apiRepository.existsById(id)) {
+            throw new NotFoundException();
+        }
+        apiRepository.deleteById(id);
+    }
 
 }

@@ -1,10 +1,12 @@
 package io.apicollab.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import io.apicollab.server.dto.ApplicationDTO;
 import io.apicollab.server.repository.ApplicationRepository;
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,10 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,9 +46,23 @@ public class ApplicationControllerTest {
     @Autowired
     private ApplicationRepository applicationRepository;
 
+    private String validAPISpec;
+
     @Before
     public void cleanup() {
+        validAPISpec = getFile("apis/valid.yml");
         applicationRepository.deleteAll();
+    }
+
+    private String getFile(String fileName) {
+        String result = "";
+        ClassLoader classLoader = getClass().getClassLoader();
+        try {
+            result = IOUtils.toString(classLoader.getResourceAsStream(fileName));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
     @Test
@@ -238,5 +258,53 @@ public class ApplicationControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(applicationDTO))))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void deleteNonExistingApplication() throws Exception {
+        mockMvc.perform(delete("/applications/12345")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void deleteApplication() throws Exception {
+        // Create
+        ApplicationDTO applicationDTO = ApplicationDTO.builder().name("Application 1").email("app1@applications.com").build();
+        MvcResult mvcResult = mockMvc.perform(post("/applications")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(applicationDTO)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        JsonNode jsonNode = objectMapper.readTree(mvcResult.getResponse().getContentAsString());
+        // Retrieve
+        mockMvc.perform((get("/applications/" + jsonNode.get("id").asText())))
+                .andExpect(status().isOk());
+        // Delete
+        mockMvc.perform(delete("/applications/" + jsonNode.get("id").asText()))
+                .andExpect(status().isNoContent());
+        // Confirm
+        mockMvc.perform((get("/applications/" + jsonNode.get("id").asText())))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void deleteApplicationWithApis() throws Exception {
+        // Create
+        ApplicationDTO applicationDTO = ApplicationDTO.builder().name("Application 1").email("app1@applications.com").build();
+        MvcResult mvcResult = mockMvc.perform(post("/applications")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(applicationDTO)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        JsonNode jsonNode = objectMapper.readTree(mvcResult.getResponse().getContentAsString());
+        // Create Api
+        String spec = validAPISpec;
+        MockMultipartFile swaggerDoc = new MockMultipartFile("swaggerDoc", spec.getBytes());
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders
+                .multipart("/applications/"+jsonNode.get("id").asText()+"/apis")
+                .file(swaggerDoc);
+        mockMvc.perform(builder).andExpect(status().isCreated());
+        // Delete
+        mockMvc.perform(delete("/applications/" + jsonNode.get("id").asText()))
+                .andExpect(status().isConflict());
     }
 }

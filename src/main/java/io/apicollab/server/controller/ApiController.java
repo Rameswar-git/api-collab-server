@@ -107,6 +107,12 @@ public class ApiController {
                 .body(new ByteArrayResource(api.getSwaggerDefinition().getBytes()));
     }
 
+    @DeleteMapping("/apis/{apiId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable String apiId) {
+        apiService.delete(apiId);
+    }
+
     private String extractFileContent(final MultipartFile file) {
         try (InputStream inputStream = file.getInputStream()) {
             return IOUtils.toString(inputStream);

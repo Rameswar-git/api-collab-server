@@ -4,6 +4,7 @@ import io.apicollab.server.constant.ApiStatus;
 import io.apicollab.server.domain.Api;
 import io.apicollab.server.domain.Application;
 import io.apicollab.server.exception.ApiExistsException;
+import io.apicollab.server.exception.NotFoundException;
 import io.apicollab.server.repository.ApiRepository;
 import io.apicollab.server.repository.ApplicationRepository;
 import org.junit.After;
@@ -203,4 +204,26 @@ public class ApiServiceTest {
         assertThat(results).hasSize(1);
     }
 
+    @Test
+    public void deleteNonExistingApi() {
+        assertThatExceptionOfType(NotFoundException.class).isThrownBy(() -> apiService.delete("invalid_id"));
+    }
+
+    @Test
+    public void deleteApi() {
+        // Create an application
+        Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
+        Application dbApplication = applicationService.create(application);
+        // Create an api
+        Api api = Api.builder().name("Api_1").version("0.1").swaggerDefinition("{}").description("a description").status(ApiStatus.BETA).build();
+        Api dbApi = applicationService.createNewApiVersion(dbApplication.getId(), api);
+        // Retrieve api
+        dbApi = apiService.findOne(dbApi.getId());
+        assertThat(dbApi).isNotNull();
+        // Delete api
+        apiService.delete(dbApi.getId());
+        // Retrieve api
+        final String apiId = dbApi.getId();
+        assertThatExceptionOfType(NotFoundException.class).isThrownBy(() -> apiService.findOne(apiId));
+    }
 }

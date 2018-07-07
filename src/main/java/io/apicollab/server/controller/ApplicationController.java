@@ -62,4 +62,10 @@ public class ApplicationController {
         applicationDTO.add(linkTo(methodOn(ApplicationController.class).getOne(application.getId())).withSelfRel());
         return applicationDTO;
     }
+
+    @DeleteMapping("/applications/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable String id) {
+        applicationService.delete(id);
+    }
 }
