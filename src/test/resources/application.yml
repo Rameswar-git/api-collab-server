@@ -5,3 +5,5 @@ spring:
         search:
           default:
             directory_provider: local-heap
+
+api-suggestions-refresh-rate-milliseconds: 1000

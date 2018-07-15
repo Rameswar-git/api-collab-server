@@ -170,7 +170,7 @@ paths:
   /apis:
     get:
       summary: Retreive All APIs or search by keywords
-      operationId: get-apis-query
+      operationId: get-apis
       tags:
         - APIs
       responses:
@@ -189,7 +189,7 @@ paths:
   /apis/search:
       get:
         summary: Retreive All APIs or search by keywords
-        operationId: get-apis-query
+        operationId: get-apis-search
         tags:
           - APIs
         parameters:
@@ -271,6 +271,39 @@ paths:
             text/plain:
               schema:
                 type: string
+
+  /suggestions/{partialWord}:
+    get:
+      summary: Retrive all the suggestions based partial word
+      operationId: get-suggestions
+      tags:
+        - Search
+      parameters:
+        - name: partialWord
+          in: path
+          required: true
+          description: The partial word
+          example: "valid"
+          schema:
+            type: string
+      responses:
+        '201':
+          description: List of suggestions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                example: ["valid", "validDate", "validity"]
+
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   schemas:
     Application:

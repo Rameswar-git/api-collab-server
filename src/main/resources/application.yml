@@ -36,3 +36,5 @@ logging:
   level:
     org.hibernate.search: DEBUG
     #org.springframework: DEBUG
+
+api-suggestions-refresh-rate-milliseconds : 2000
