@@ -20,12 +20,7 @@ public class SuggestionServiceTest {
     private static final String JSON_STRING = "{\"name\":\"Steve\", \"startDate\":\" The start Date\" }";
 
     @Autowired
-    SuggestionService service;
-
-    @Test
-    public void testIndexing() {
-        service.processDocuments(asList(TEXT_1, TEXT_2));
-    }
+    private SuggestionService service;
 
     @Test
     public void testSearchFullWord() {
@@ -34,7 +29,6 @@ public class SuggestionServiceTest {
         List<String> words = service.search(query);
         assertThat(words).hasSize(2);
         assertThat(words.get(0)).isEqualToIgnoringCase(query);
-
     }
 
     @Test

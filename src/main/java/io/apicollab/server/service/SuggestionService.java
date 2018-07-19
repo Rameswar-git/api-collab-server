@@ -1,7 +1,7 @@
 package io.apicollab.server.service;
 
+import io.apicollab.server.domain.Api;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,10 +31,21 @@ public class SuggestionService {
 
     private static final String INDEX_FIELD_NAME = "suggestionId";
     private static final String REGEX_INVALID_CHAR = "[\\s@\"&:{}/#.,?$+-]+";
-    private static RAMDirectory directory = null;
+
+    private RAMDirectory directory = new RAMDirectory();
+    private IndexWriter indexWriter;
+    private SearcherManager searcherManager;
 
     @Autowired
     private ApiService apiService;
+
+    @PostConstruct
+    protected void initialize() throws IOException {
+        IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+        indexWriter = new IndexWriter(directory, config);
+        searcherManager = new SearcherManager(indexWriter, null);
+    }
 
     /**
      * Periodically refresh the keywords based on the api specifications
@@ -41,7 +53,7 @@ public class SuggestionService {
     @Scheduled(fixedDelayString = "${api-suggestions-refresh-rate-milliseconds}")
     public void processAllApiDocuments(){
         log.debug("Refreshing Api suggestions");
-        List<String> specs = apiService.getAll().stream().map(api-> api.getSwaggerDefinition()).collect(Collectors.toList());
+        List<String> specs = apiService.getAll().stream().map(Api::getSwaggerDefinition).collect(Collectors.toList());
         processDocuments(specs);
         log.debug("Refreshing Api suggestions complete");
     }
@@ -54,22 +66,14 @@ public class SuggestionService {
     public List<String> search(String partialKeyword){
         List<String> results = new ArrayList<>();
         String wildCardKeyword = String.format("*%s*",partialKeyword);
-        try
-        {
-            //Create Reader
-            DirectoryReader reader = DirectoryReader.open(directory);
+        try {
             //Create index searcher
-            IndexSearcher searcher = new IndexSearcher(reader);
+            IndexSearcher searcher = searcherManager.acquire();
             //Build query
             Query fuzzyQuery = new FuzzyQuery(new Term(INDEX_FIELD_NAME, partialKeyword));
             StandardQueryParser queryParserHelper = new StandardQueryParser();
             queryParserHelper.setAllowLeadingWildcard(true);
-            Query query = null;
-            try {
-                query = queryParserHelper.parse(wildCardKeyword, INDEX_FIELD_NAME);
-            } catch (QueryNodeException e) {
-                log.error("Failed to build wildcard query for input {}", wildCardKeyword, e);
-            }
+            Query query = queryParserHelper.parse(wildCardKeyword, INDEX_FIELD_NAME);
             if(query == null){
                 // resort to PrefixQuery query
                 query = new PrefixQuery(new Term(INDEX_FIELD_NAME, partialKeyword));
@@ -78,20 +82,18 @@ public class SuggestionService {
                     .add(fuzzyQuery, BooleanClause.Occur.SHOULD)
                     .add(query,BooleanClause.Occur.SHOULD)
                     .build();
-
             // Search
             TopDocs foundDocs = searcher.search(combinedQuery, 10);
             // Total found documents
-            log.debug("Total Results :: " + foundDocs.totalHits);
-            for (ScoreDoc sd : foundDocs.scoreDocs)
-            {
+            log.debug("Total Results :: ", foundDocs.totalHits);
+            for (ScoreDoc sd : foundDocs.scoreDocs) {
                 Document d = searcher.doc(sd.doc);
                 results.add(d.get(INDEX_FIELD_NAME));
             }
-            reader.close();
-        }
-        catch (IOException e)
-        {
+            searcherManager.release(searcher);
+        } catch (QueryNodeException e) {
+            log.error("Failed to build wildcard query for input {}", wildCardKeyword, e);
+        } catch (IOException e) {
             // any error goes here
             log.error("Failed to search", e);
         }
@@ -112,6 +114,13 @@ public class SuggestionService {
             suggestions.addAll(terms);
         }
         processSuggestions(suggestions);
+        try {
+            indexWriter.commit();
+            searcherManager.maybeRefresh();
+            log.debug("Index refreshed");
+        } catch (IOException e) {
+            log.error("Index refresh failed", e);
+        }
     }
 
 
@@ -120,22 +129,12 @@ public class SuggestionService {
      * @param suggestions
      */
     private void processSuggestions(Set<String> suggestions){
-
         log.debug("Starting to index {} words", suggestions.size());
-        Analyzer analyzer = new StandardAnalyzer();
-        IndexWriterConfig config = new IndexWriterConfig(analyzer);
-        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
-        RAMDirectory newDirectory = new RAMDirectory();
-        // IndexWriter writes new index files to the directory
-        IndexWriter writer = null;
         try {
-            writer = new IndexWriter(newDirectory, config);
             for (String suggestion : suggestions) {
-                indexSuggestion(writer, suggestion);
+                indexSuggestion(indexWriter, suggestion);
             }
             log.debug("Completed indexing {} words", suggestions.size());
-            writer.close();
-            directory = newDirectory;
         } catch (IOException e) {
             log.error("Failed indexing {} words", suggestions.size(), e);
         }
@@ -147,11 +146,10 @@ public class SuggestionService {
      * @param suggestion
      * @throws IOException
      */
-    static void indexSuggestion(IndexWriter writer, String suggestion) throws IOException
-    {
+    static void indexSuggestion(IndexWriter writer, String suggestion) throws IOException {
         Document doc = new Document();
         doc.add(new TextField(INDEX_FIELD_NAME, suggestion, Field.Store.YES));
-        writer.addDocument(doc);
+        writer.updateDocument(new Term(INDEX_FIELD_NAME, suggestion), doc);
     }
 
 }
