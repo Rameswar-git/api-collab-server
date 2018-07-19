@@ -31,6 +31,7 @@ public class SuggestionService {
 
     private static final String INDEX_FIELD_NAME = "suggestionId";
     private static final String REGEX_INVALID_CHAR = "[\\s@\"&:{}/#.,?$+-]+";
+    private static final int FUZZY_MIN_WORD_LENGTH = 4;
 
     private RAMDirectory directory = new RAMDirectory();
     private IndexWriter indexWriter;
@@ -51,7 +52,7 @@ public class SuggestionService {
      * Periodically refresh the keywords based on the api specifications
      */
     @Scheduled(fixedDelayString = "${api-suggestions-refresh-rate-milliseconds}")
-    public void processAllApiDocuments(){
+    public void processAllApiDocuments() {
         log.debug("Refreshing Api suggestions");
         List<String> specs = apiService.getAll().stream().map(Api::getSwaggerDefinition).collect(Collectors.toList());
         processDocuments(specs);
@@ -59,30 +60,18 @@ public class SuggestionService {
     }
 
     /**
-     * Peforms fuzzy search and wildcard search for a given word
+     * Performs fuzzy search and wildcard search for a given word
+     *
      * @param partialKeyword
      * @return The matching suggestions
      */
-    public List<String> search(String partialKeyword){
+    public List<String> search(String partialKeyword) {
         List<String> results = new ArrayList<>();
-        String wildCardKeyword = String.format("*%s*",partialKeyword);
         try {
-            //Create index searcher
             IndexSearcher searcher = searcherManager.acquire();
-            //Build query
-            Query fuzzyQuery = new FuzzyQuery(new Term(INDEX_FIELD_NAME, partialKeyword));
-            StandardQueryParser queryParserHelper = new StandardQueryParser();
-            queryParserHelper.setAllowLeadingWildcard(true);
-            Query query = queryParserHelper.parse(wildCardKeyword, INDEX_FIELD_NAME);
-            if(query == null){
-                // resort to PrefixQuery query
-                query = new PrefixQuery(new Term(INDEX_FIELD_NAME, partialKeyword));
-            }
-            BooleanQuery combinedQuery = new BooleanQuery.Builder()
-                    .add(fuzzyQuery, BooleanClause.Occur.SHOULD)
-                    .add(query,BooleanClause.Occur.SHOULD)
-                    .build();
-            // Search
+            // Build Query
+            Query combinedQuery = constructQueries(partialKeyword);
+            // Perform Search
             TopDocs foundDocs = searcher.search(combinedQuery, 10);
             // Total found documents
             log.debug("Total Results :: ", foundDocs.totalHits);
@@ -91,8 +80,6 @@ public class SuggestionService {
                 results.add(d.get(INDEX_FIELD_NAME));
             }
             searcherManager.release(searcher);
-        } catch (QueryNodeException e) {
-            log.error("Failed to build wildcard query for input {}", wildCardKeyword, e);
         } catch (IOException e) {
             // any error goes here
             log.error("Failed to search", e);
@@ -101,16 +88,57 @@ public class SuggestionService {
     }
 
     /**
+     * Builds a set of queries and combines in to a single boolean OR query
+     */
+    private Query constructQueries(String word) {
+        //Build multiple queries
+        List<Query> queries = new ArrayList<>();
+        // Fuzzy if applicable
+        appendFuzzyQuery(word, queries);
+        // Wildcard query if possible
+        appendWildcardQuery(word, queries);
+        // Combine all queries
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        queries.forEach(q -> builder.add(q, BooleanClause.Occur.SHOULD));
+        return builder.build();
+    }
+
+    private void appendFuzzyQuery(String word, List<Query> queries) {
+        if (word.length() >= FUZZY_MIN_WORD_LENGTH) {
+            queries.add(new FuzzyQuery(new Term(INDEX_FIELD_NAME, word)));
+        }
+    }
+
+    /**
+     * Appends a wild card query, otherwise fallbacks to prefix query
+     */
+    private void appendWildcardQuery(String word, List<Query> queries) {
+        StandardQueryParser queryParserHelper = new StandardQueryParser();
+        queryParserHelper.setAllowLeadingWildcard(true);
+        Query query = null;
+        String wildCardKeyword = String.format("*%s*", word.replace("*", ""));
+        try {
+            query = queryParserHelper.parse(wildCardKeyword, INDEX_FIELD_NAME);
+        } catch (QueryNodeException e) {
+            log.error("Failed to build wildcard query for input {}", wildCardKeyword, e);
+            // fallback to prefix query
+            query = new PrefixQuery(new Term(INDEX_FIELD_NAME, word));
+        }
+        queries.add(query);
+    }
+
+    /**
      * Index the documents
      * Builds a set of keywords from documents and adds to indexs
+     *
      * @param documents
      */
-    public void processDocuments(List<String> documents){
+    public void processDocuments(List<String> documents) {
         // Build a set of suggestions.
         Set<String> suggestions = new HashSet<>();
-        for (String document: documents) {
+        for (String document : documents) {
             List<String> terms = asList(document.split(REGEX_INVALID_CHAR));
-            terms = terms.stream().filter(s-> !s.isEmpty()).collect(Collectors.toList());
+            terms = terms.stream().filter(s -> !s.isEmpty()).collect(Collectors.toList());
             suggestions.addAll(terms);
         }
         processSuggestions(suggestions);
@@ -126,9 +154,10 @@ public class SuggestionService {
 
     /**
      * Process each keyword by adding the search index
+     *
      * @param suggestions
      */
-    private void processSuggestions(Set<String> suggestions){
+    private void processSuggestions(Set<String> suggestions) {
         log.debug("Starting to index {} words", suggestions.size());
         try {
             for (String suggestion : suggestions) {
@@ -142,6 +171,7 @@ public class SuggestionService {
 
     /**
      * Helper method to add a single document to the index
+     *
      * @param writer
      * @param suggestion
      * @throws IOException

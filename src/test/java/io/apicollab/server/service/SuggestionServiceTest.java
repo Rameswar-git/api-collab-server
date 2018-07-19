@@ -43,7 +43,7 @@ public class SuggestionServiceTest {
     @Test
     public void testSearchPartialWordEnd() {
         service.processDocuments(asList(TEXT_1, TEXT_2));
-        String query = "oc1";
+        String query = "doc1";
         List<String> words = service.search(query);
         assertThat(words.size()).isGreaterThan(1);
     }
