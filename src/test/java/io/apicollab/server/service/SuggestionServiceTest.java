@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -50,9 +51,19 @@ public class SuggestionServiceTest {
 
     @Test
     public void testMiddleWord() {
-        service.processDocuments(asList(JSON_STRING));
+        service.processDocuments(Collections.singletonList(JSON_STRING));
         String query = "rt";
         List<String> words = service.search(query);
-        assertThat(words).contains("startDate", "start");
+        assertThat(words).containsOnly("startdate", "start");
     }
+
+    @Test
+    public void indexSpecWithDuplicates() {
+        String duplicates = "listPets Pet pets listPets Pets petstore Pet";
+        service.processDocuments(Collections.singletonList(duplicates));
+        service.processDocuments(Collections.singletonList(duplicates));
+        List<String> words = service.search("pet");
+        assertThat(words).doesNotHaveDuplicates();
+    }
+
 }

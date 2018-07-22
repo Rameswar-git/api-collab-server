@@ -2,6 +2,7 @@ package io.apicollab.server.service;
 
 import io.apicollab.server.domain.Api;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -14,16 +15,12 @@ import org.apache.lucene.store.RAMDirectory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
-
-import static java.util.Arrays.asList;
 
 @Slf4j
 @Service
@@ -67,10 +64,13 @@ public class SuggestionService {
      */
     public List<String> search(String partialKeyword) {
         List<String> results = new ArrayList<>();
+        if(StringUtils.isBlank(partialKeyword)) {
+            return results;
+        }
         try {
             IndexSearcher searcher = searcherManager.acquire();
             // Build Query
-            Query combinedQuery = constructQueries(partialKeyword);
+            Query combinedQuery = constructQueries(partialKeyword.toLowerCase());
             // Perform Search
             TopDocs foundDocs = searcher.search(combinedQuery, 10);
             // Total found documents
@@ -134,14 +134,11 @@ public class SuggestionService {
      * @param documents
      */
     public void processDocuments(List<String> documents) {
-        // Build a set of suggestions.
-        Set<String> suggestions = new HashSet<>();
-        for (String document : documents) {
-            List<String> terms = asList(document.split(REGEX_INVALID_CHAR));
-            terms = terms.stream().filter(s -> !s.isEmpty()).collect(Collectors.toList());
-            suggestions.addAll(terms);
+        if(CollectionUtils.isEmpty(documents)) {
+            return;
         }
-        processSuggestions(suggestions);
+        // Build a set of suggestions.
+        documents.forEach(this::processDocument);
         try {
             indexWriter.commit();
             searcherManager.maybeRefresh();
@@ -149,6 +146,17 @@ public class SuggestionService {
         } catch (IOException e) {
             log.error("Index refresh failed", e);
         }
+    }
+
+    private void processDocument(String document) {
+        if(StringUtils.isBlank(document)) {
+            return;
+        }
+        Set<String> suggestions = Arrays.stream(document.split(REGEX_INVALID_CHAR))
+                .filter(StringUtils::isNotBlank)
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
+        processSuggestions(suggestions);
     }
 
 
