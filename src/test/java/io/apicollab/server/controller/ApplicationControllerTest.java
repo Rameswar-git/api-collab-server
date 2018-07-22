@@ -158,9 +158,10 @@ public class ApplicationControllerTest {
                 .andExpect(status().isCreated());
         mockMvc.perform((get("/applications")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.applications.*", hasSize(1)))
-                .andExpect(jsonPath("$.applications[0].name", is(applicationDTO.getName())))
-                .andExpect(jsonPath("$.applications[0].email", is(applicationDTO.getEmail())));
+                .andExpect(jsonPath("$.totalCount").value(1))
+                .andExpect(jsonPath("$.items.*", hasSize(1)))
+                .andExpect(jsonPath("$.items[0].name", is(applicationDTO.getName())))
+                .andExpect(jsonPath("$.items[0].email", is(applicationDTO.getEmail())));
     }
 
     @Test
@@ -178,9 +179,10 @@ public class ApplicationControllerTest {
 
         mockMvc.perform((get("/applications")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.applications.*", hasSize(2)))
-                .andExpect(jsonPath("$.applications[0].name", isIn(Arrays.asList("Application 1", "Application 2"))))
-                .andExpect(jsonPath("$.applications[0].email", isIn(Arrays.asList("app1@applications.com", "app2@applications.com"))));
+                .andExpect(jsonPath("$.totalCount").value(2))
+                .andExpect(jsonPath("$.items.*", hasSize(2)))
+                .andExpect(jsonPath("$.items[0].name", isIn(Arrays.asList("Application 1", "Application 2"))))
+                .andExpect(jsonPath("$.items[0].email", isIn(Arrays.asList("app1@applications.com", "app2@applications.com"))));
     }
 
     @Test

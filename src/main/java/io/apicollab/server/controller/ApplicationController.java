@@ -2,7 +2,7 @@ package io.apicollab.server.controller;
 
 import io.apicollab.server.domain.Application;
 import io.apicollab.server.dto.ApplicationDTO;
-import io.apicollab.server.dto.ApplicationListDTO;
+import io.apicollab.server.dto.CollectionWrapperDTO;
 import io.apicollab.server.mapper.ApplicationMapper;
 import io.apicollab.server.service.ApplicationService;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
@@ -27,12 +29,13 @@ public class ApplicationController {
     private ApplicationMapper applicationMapper;
 
     @GetMapping("/applications")
-    public ApplicationListDTO get() {
-        ApplicationListDTO applications = ApplicationListDTO.builder().applications(applicationMapper.toDtos(applicationService.getAll())).build();
-        applications.getApplications().forEach(application ->
-                application.add(linkTo(methodOn(ApplicationController.class).getOne(application.getApplicationId())).withSelfRel())
-        );
-        return applications;
+    public CollectionWrapperDTO<ApplicationDTO> get() {
+        Collection<ApplicationDTO> applications = applicationService.getAll()
+                .stream()
+                .map(applicationMapper::toDto)
+                .collect(Collectors.toSet());
+        applications.forEach(application -> linkTo(methodOn(ApplicationController.class).getOne(application.getApplicationId())).withSelfRel());
+        return new CollectionWrapperDTO<>(applications);
     }
 
     @GetMapping("/applications/{id}")

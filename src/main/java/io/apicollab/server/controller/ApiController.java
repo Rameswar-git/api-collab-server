@@ -3,8 +3,8 @@ package io.apicollab.server.controller;
 import io.apicollab.server.constant.ApiStatus;
 import io.apicollab.server.domain.Api;
 import io.apicollab.server.dto.ApiDTO;
-import io.apicollab.server.dto.ApiListDTO;
 import io.apicollab.server.dto.ApiUpdateInput;
+import io.apicollab.server.dto.CollectionWrapperDTO;
 import io.apicollab.server.exception.ApiPortalException;
 import io.apicollab.server.mapper.ApiMapper;
 import io.apicollab.server.service.ApiService;
@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 
@@ -49,19 +51,32 @@ public class ApiController {
 
 
     @GetMapping("/applications/{applicationId}/apis")
-    public ApiListDTO getApplicationApis(@PathVariable String applicationId) {
+    public CollectionWrapperDTO<ApiDTO> getApplicationApis(@PathVariable String applicationId) {
+        //Check if application exists, the following throws an error if not present.
         applicationService.findById(applicationId);
-        return ApiListDTO.builder().apis(apiMapper.toDtos(apiService.findByApplication(applicationId))).build();
+        Set<ApiDTO> items = apiService.findByApplication(applicationId)
+                .stream()
+                .map(apiMapper::toDto)
+                .collect(Collectors.toSet());
+        return new CollectionWrapperDTO(items);
     }
 
     @GetMapping("/apis")
-    public ApiListDTO getAllApis() {
-        return ApiListDTO.builder().apis(apiMapper.toDtos(apiService.getAll())).build();
+    public CollectionWrapperDTO<ApiDTO> getAllApis() {
+        Set<ApiDTO> items = apiService.getAll()
+                .stream()
+                .map(apiMapper::toDto)
+                .collect(Collectors.toSet());
+        return new CollectionWrapperDTO<>(items);
     }
 
     @GetMapping("apis/search")
-    public ApiListDTO searchApis(@RequestParam(name = "query") String query) {
-        return ApiListDTO.builder().apis(apiMapper.toDtos(apiService.search(query))).build();
+    public CollectionWrapperDTO<ApiDTO> searchApis(@RequestParam(name = "query") String query) {
+        Set<ApiDTO> items = apiService.search(query)
+                .stream()
+                .map(apiMapper::toDto)
+                .collect(Collectors.toSet());
+        return new CollectionWrapperDTO<>(items);
     }
 
 

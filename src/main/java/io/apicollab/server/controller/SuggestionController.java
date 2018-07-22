@@ -1,5 +1,6 @@
 package io.apicollab.server.controller;
 
+import io.apicollab.server.dto.CollectionWrapperDTO;
 import io.apicollab.server.service.SuggestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +16,7 @@ public class SuggestionController {
     private SuggestionService service;
 
     @GetMapping("/suggestions/{partialWord}")
-    public List<String> getSuggestions(@PathVariable String partialWord){
-        return service.search(partialWord);
+    public CollectionWrapperDTO<String> getSuggestions(@PathVariable String partialWord){
+        return new CollectionWrapperDTO<>(service.search(partialWord));
     }
 }

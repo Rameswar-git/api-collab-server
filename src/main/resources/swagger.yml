@@ -169,7 +169,7 @@ paths:
 
   /apis:
     get:
-      summary: Retreive All APIs or search by keywords
+      summary: Retreive All APIs
       operationId: get-apis
       tags:
         - APIs
@@ -188,7 +188,7 @@ paths:
                 $ref: "#/components/schemas/Error"
   /apis/search:
       get:
-        summary: Retreive All APIs or search by keywords
+        summary: Retreive All APIs using full text search
         operationId: get-apis-search
         tags:
           - APIs
@@ -283,7 +283,7 @@ paths:
           in: path
           required: true
           description: The partial word
-          example: "valid"
+          example: "star"
           schema:
             type: string
       responses:
@@ -292,10 +292,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
-                example: ["valid", "validDate", "validity"]
+                $ref: "#/components/schemas/SuggestionsList"
 
         default:
           description: unexpected error
@@ -321,8 +318,13 @@ components:
           type: string
           description: Email address of the main contact
     ApplicationList:
+      allOf:
+        - $ref: '#/components/schemas/GenericList'
+        - type: object
+          required:
+            - items
       properties:
-        applications:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Application'
@@ -341,13 +343,36 @@ components:
         version:
           type: string
           description: Email address of the main contact
+    GenericList:
+      properties:
+        totalCount:
+          type: integer
+          description: If available, the total count of items on the server for this type. Can be greater than the items in this payload
 
     ApiList:
+      allOf:
+        - $ref: '#/components/schemas/GenericList'
+        - type: object
+          required:
+            - items
       properties:
-        applications:
+        items:
           type: array
           items:
             $ref: '#/components/schemas/Api'
+
+    SuggestionsList:
+      allOf:
+        - $ref: '#/components/schemas/GenericList'
+        - type: object
+          required:
+            - items
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+          example: [start, startDate, star]
 
     Error:
       required:

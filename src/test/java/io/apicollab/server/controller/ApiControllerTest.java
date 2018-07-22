@@ -26,9 +26,7 @@ import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -257,7 +255,8 @@ public class ApiControllerTest {
 
         mockMvc.perform(get("/applications/1/apis"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.apis.*", hasSize(3)));
+                .andExpect(jsonPath("$.totalCount").value(3))
+                .andExpect(jsonPath("$.items.*", hasSize(3)));
     }
 
     @Test
@@ -288,7 +287,8 @@ public class ApiControllerTest {
         // Fetch All
         mockMvc.perform(get("/apis"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.apis.*", hasSize(2)));
+                .andExpect(jsonPath("$.totalCount").value(2))
+                .andExpect(jsonPath("$.items.*", hasSize(2)));
 
     }
 
@@ -320,14 +320,16 @@ public class ApiControllerTest {
         // Fetch All
         mockMvc.perform(get("/apis/search?query=apples"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.apis.*", hasSize(1)))
-                .andExpect(jsonPath("$.apis.[0].name").value("Fruits API"));
+                .andExpect(jsonPath("$.totalCount").value(1))
+                .andExpect(jsonPath("$.items.*", hasSize(1)))
+                .andExpect(jsonPath("$.items.[0].name").value("Fruits API"));
 
 
         mockMvc.perform(get("/apis/search?query=space"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.apis.*", hasSize(1)))
-                .andExpect(jsonPath("$.apis.[0].name").value("Space API"));
+                .andExpect(jsonPath("$.totalCount").value(1))
+                .andExpect(jsonPath("$.items.*", hasSize(1)))
+                .andExpect(jsonPath("$.items.[0].name").value("Space API"));
     }
 
     @Test
