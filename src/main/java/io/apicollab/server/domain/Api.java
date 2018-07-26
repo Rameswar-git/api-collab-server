@@ -4,6 +4,7 @@ import io.apicollab.server.constant.ApiStatus;
 import io.apicollab.server.mapper.ApiTagsConverter;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
@@ -47,9 +48,10 @@ public class Api extends BaseEntity {
     @Field(bridge=@FieldBridge(impl=EnumBridge.class))
     private ApiStatus status;
 
-    @Column(nullable = false, columnDefinition = "CLOB")
-    @Lob
+    @Column(nullable = false, length = 2000000) // 2 MB max
     @Basic(fetch = FetchType.LAZY)
+    @Lob
+    @Type(type="org.hibernate.type.StringType")
     @Field()
     private String swaggerDefinition;
 

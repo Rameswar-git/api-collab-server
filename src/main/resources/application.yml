@@ -16,25 +16,22 @@ spring:
   jpa:
     generate-ddl: true
     show-sql: true
-
-hibernate:
-  search:
-    default:
-      directory_provider: filesystem
-      indexBase: "/var/lucene/indexes"
-
-spring:
-  jpa:
     properties:
       hibernate:
         search:
           default:
             directory_provider: filesystem
             indexBase: "/var/lucene/indexes"
+        temp:
+          use_jdbc_metadata_defaults: false # Disable retrieving metadata from db (as postgres does not support this)
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/api-collab
+    username: postgres
+    password: root
 
 logging:
   level:
     org.hibernate.search: DEBUG
-    #org.springframework: DEBUG
 
 api-suggestions-refresh-rate-milliseconds : 2000
