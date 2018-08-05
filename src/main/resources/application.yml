@@ -25,11 +25,6 @@ spring:
         temp:
           use_jdbc_metadata_defaults: false # Disable retrieving metadata from db (as postgres does not support this)
 
-  datasource:
-    url: jdbc:postgresql://localhost:5432/api-collab
-    username: postgres
-    password: root
-
 logging:
   level:
     org.hibernate.search: DEBUG
