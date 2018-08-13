@@ -19,7 +19,7 @@ spring:
     default-property-inclusion: NON_NULL
   jpa:
     generate-ddl: true
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         search:
@@ -31,6 +31,6 @@ spring:
 
 logging:
   level:
-    org.hibernate.search: DEBUG
+    org.hibernate.search: INFO
 
 api-suggestions-refresh-rate-milliseconds : 2000

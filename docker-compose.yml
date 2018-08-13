@@ -1,0 +1,36 @@
+version : '3'
+services:
+  server:
+    container_name: server
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: target/server-1.0-SNAPSHOT.jar
+    image: server:server-1.0-SNAPSHOT
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/postgres?useUnicode=true&characterEncoding=utf8&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+    ports:
+      - 8000:8080 # map localhost:8000 to 8080
+    depends_on:
+      - db
+    networks:
+      - api-collab-network
+  db:
+    image: postgres
+    volumes:
+      - apicollab:/var/lib/postgresql/data
+    ports:
+      - 5432
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: apicollab
+    networks:
+      - api-collab-network
+volumes:
+  apicollab:
+networks:
+  api-collab-network:
+    driver: bridge
