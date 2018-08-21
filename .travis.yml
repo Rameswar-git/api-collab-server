@@ -1,12 +1,17 @@
+sudo: required
+services:
+  - docker
 language: java
 
 jdk:
-  - oraclejdk8
+  - openjdk8
 
 cache:
   directories:
     - '$HOME/.m2/repository'
     - '$HOME/.sonar/cache'
+env:
+  - JAR_FILE=target/server-1.0-SNAPSHOT.jar
 
 addons:
   sonarcloud:
@@ -16,3 +21,12 @@ addons:
 
 script:
    - mvn org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar
+
+after_success:
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+- export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BUILD_NUMBER; fi`
+- export IMAGE_NAME=apicollab/server
+- docker build -t $IMAGE_NAME:$TRAVIS_COMMIT --build-arg JAR_FILE=${JAR_FILE} .
+- docker tag $IMAGE_NAME:$TRAVIS_COMMIT $IMAGE_NAME:$TAG
+- docker push $IMAGE_NAME
+
