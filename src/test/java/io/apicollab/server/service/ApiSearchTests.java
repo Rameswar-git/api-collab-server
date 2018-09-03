@@ -107,4 +107,39 @@ public class ApiSearchTests {
         assertThat(results.get(0).getName()).isEqualToIgnoringCase("Space API");
     }
 
+    /**
+     * Case insensitive search
+     */
+    @Test
+    public void searchCaseInsensitiveSearch() {
+        List<Api> results = apiService.search("INTERESTING").stream().collect(Collectors.toList());
+        assertThat(results).isNotEmpty();
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getName()).isEqualToIgnoringCase("Space API");
+    }
+
+    /**
+     * Case insensitive search with partial word
+     */
+    @Test
+    public void searchCaseInsensitiveSearchPartialWord() {
+        List<Api> results = apiService.search("INTEREST").stream().collect(Collectors.toList());
+        assertThat(results).isNotEmpty();
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getName()).isEqualToIgnoringCase("Space API");
+    }
+
+    /**
+     * Case insensitive search with partial word
+     */
+    @Test
+    public void searchCaseInsensitiveSearchMultiplePartialWord() {
+        List<Api> results = apiService.search("baN TECH").stream().collect(Collectors.toList());
+        assertThat(results).isNotEmpty();
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).getName()).isEqualToIgnoringCase("Fruits API");
+        assertThat(results.get(1).getName()).isEqualToIgnoringCase("Space API");
+
+    }
+
 }

@@ -22,6 +22,14 @@ public class ApiSearchRepository {
     private EntityManager entityManager;
 
     public List<Api> search(String searchString, List<ApiStatus> statusCodes) {
+
+        // lowercase the search terms
+        searchString = searchString.toLowerCase();
+
+        // prefix the wild card in for each word
+        searchString = searchString.replaceAll("(\\w)\\s", "$1* ").replaceAll("(\\w)$", "$1*");
+
+
         FullTextEntityManager fullTextEntityManager
                 = Search.getFullTextEntityManager(entityManager);
 
