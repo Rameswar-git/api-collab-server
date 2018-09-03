@@ -60,6 +60,7 @@ public class ApiSearchTests {
         createApi(app, "Fruits API", "apple fruit, banana are awesome", ApiStatus.BETA);
         createApi(app, "Space API", "technology space time are interesting concepts", ApiStatus.STABLE);
         createApi(app, "Old API", " Old technology space time are interesting concepts", ApiStatus.ARCHIVED);
+        createApi(app, "Tech API", "Ban all Tech!", ApiStatus.STABLE);
 
     }
 
@@ -136,10 +137,10 @@ public class ApiSearchTests {
     public void searchCaseInsensitiveSearchMultiplePartialWord() {
         List<Api> results = apiService.search("baN TECH").stream().collect(Collectors.toList());
         assertThat(results).isNotEmpty();
-        assertThat(results).hasSize(2);
-        assertThat(results.get(0).getName()).isEqualToIgnoringCase("Fruits API");
-        assertThat(results.get(1).getName()).isEqualToIgnoringCase("Space API");
-
+        assertThat(results).hasSize(3);
+        assertThat(results.get(0).getName()).isEqualToIgnoringCase("Tech API"); // contains both words
+        assertThat(results.get(1).getName()).isEqualToIgnoringCase("Fruits API"); // contains ban "bananna"
+        assertThat(results.get(2).getName()).isEqualToIgnoringCase("Space API"); // contains technology
     }
 
 }
