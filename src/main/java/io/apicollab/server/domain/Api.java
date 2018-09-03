@@ -3,11 +3,11 @@ package io.apicollab.server.domain;
 import io.apicollab.server.constant.ApiStatus;
 import io.apicollab.server.mapper.ApiTagsConverter;
 import lombok.*;
+import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
+import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.FieldBridge;
-import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.*;
 import org.hibernate.search.bridge.builtin.EnumBridge;
 
 import javax.persistence.*;
@@ -21,6 +21,12 @@ import java.util.List;
 @EqualsAndHashCode(of = {"id"})
 @ToString(of = {"id", "name"})
 @Indexed
+@AnalyzerDef(name = "lowercaseAnalyser",
+        tokenizer = @TokenizerDef(factory = StandardTokenizerFactory.class),
+        filters = {
+                @TokenFilterDef(factory = LowerCaseFilterFactory.class),
+        }
+)
 public class Api extends BaseEntity {
 
     private static final long serialVersionUID = 8281554038825109184L;
@@ -53,6 +59,7 @@ public class Api extends BaseEntity {
     @Lob
     @Type(type="org.hibernate.type.StringType")
     @Field()
+    @Analyzer(definition = "lowercaseAnalyser")
     private String swaggerDefinition;
 
     @ManyToOne
