@@ -58,9 +58,9 @@ public class ApiSearchTests {
         Application app = createApp("testApp1", "test1@gmail.com");
         // Create apis with fake descriptions
         createApi(app, "Fruits API", "apple fruit, banana are awesome", ApiStatus.BETA);
-        createApi(app, "Space API", "technology space time are interesting concepts", ApiStatus.STABLE);
+        createApi(app, "Space API", "technology space time are interesting concepts this", ApiStatus.STABLE);
         createApi(app, "Old API", " Old technology space time are interesting concepts", ApiStatus.ARCHIVED);
-        createApi(app, "Tech API", "Ban all Tech!", ApiStatus.STABLE);
+        createApi(app, "Tech API", "Ban this Tech!", ApiStatus.STABLE);
 
     }
 
@@ -141,6 +141,17 @@ public class ApiSearchTests {
         assertThat(results.get(0).getName()).isEqualToIgnoringCase("Tech API"); // contains both words
         assertThat(results.get(1).getName()).isEqualToIgnoringCase("Fruits API"); // contains ban "bananna"
         assertThat(results.get(2).getName()).isEqualToIgnoringCase("Space API"); // contains technology
+    }
+
+    /**
+     * Ensure Search phrase is respected
+     */
+    @Test
+    public void searchPhrase() {
+        List<Api> results = apiService.search("\"ban this tech\"").stream().collect(Collectors.toList());
+        assertThat(results).isNotEmpty();
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getName()).isEqualToIgnoringCase("Tech API");
     }
 
 }
