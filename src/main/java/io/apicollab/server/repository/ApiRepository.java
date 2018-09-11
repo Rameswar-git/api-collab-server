@@ -12,7 +12,7 @@ import java.util.Optional;
 @Repository
 public interface ApiRepository extends JpaRepository<Api, String> {
 
-    Optional<Api> findByApplicationIdAndNameAndVersion(String applicationId, String name, String version);
+    Optional<Api> findByApplicationIdAndVersion(String applicationId, String version);
 
     Collection<Api> findByApplicationId(String applicationId);
 

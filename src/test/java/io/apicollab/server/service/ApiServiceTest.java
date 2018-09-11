@@ -19,8 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -95,7 +94,7 @@ public class ApiServiceTest {
     }
 
     @Test
-    public void createMultipleWithDifferentNames() {
+    public void shouldNotCreateMultipleWithDifferentNames() {
         // Create an application
         Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
         Application dbApplication = applicationService.create(application);
@@ -104,8 +103,9 @@ public class ApiServiceTest {
 
         // Create another Api with another name but same version
         Api anotherApi = Api.builder().name("Api_2").version("0.1").description("a description").status(ApiStatus.BETA).swaggerDefinition("{}").build();
-        applicationService.createNewApiVersion(dbApplication.getId(), anotherApi);
-        assertThat(apiRepository.count()).isEqualTo(2);
+
+        assertThatThrownBy(() -> applicationService.createNewApiVersion(dbApplication.getId(), anotherApi))
+                .isInstanceOf(ApiExistsException.class);
     }
 
     @Test

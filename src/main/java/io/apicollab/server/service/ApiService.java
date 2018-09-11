@@ -30,7 +30,7 @@ public class ApiService {
     
     @Transactional
     public Api create(Application application, Api api) {
-        Optional<Api> dbApiHolder = apiRepository.findByApplicationIdAndNameAndVersion(application.getId(), api.getName(), api.getVersion());
+        Optional<Api> dbApiHolder = apiRepository.findByApplicationIdAndVersion(application.getId(), api.getVersion());
         dbApiHolder.ifPresent(dbApi -> {
             throw new ApiExistsException(dbApi.getApplication().getName(), dbApi.getName(), dbApi.getVersion());
         });

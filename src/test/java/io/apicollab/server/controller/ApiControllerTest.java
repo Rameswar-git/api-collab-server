@@ -232,7 +232,7 @@ public class ApiControllerTest {
 
         String spec2v1 = validAPISpec
                 .replaceFirst("title:.*", "title: B")
-                .replaceFirst("version.*", "version: 1.0");
+                .replaceFirst("version.*", "version: 3.0");
 
         MockMultipartFile swaggerDoc1v1 = new MockMultipartFile("swaggerDoc", spec1v1.getBytes());
         MockMultipartFile swaggerDoc1v2 = new MockMultipartFile("swaggerDoc", spec1v2.getBytes());
@@ -268,7 +268,7 @@ public class ApiControllerTest {
 
         String spec2v1 = validAPISpec
                 .replaceFirst("title:.*", "title: Space API")
-                .replaceFirst("version.*", "version: 1.0")
+                .replaceFirst("version.*", "version: 2.0")
                 .replaceFirst("description.*", "description: Space time planets rockets");
 
         MockMultipartFile swaggerDoc1v1 = new MockMultipartFile("swaggerDoc", spec1v1.getBytes());
@@ -301,7 +301,7 @@ public class ApiControllerTest {
 
         String spec2v1 = validAPISpec
                 .replaceFirst("title:.*", "title: Space API")
-                .replaceFirst("version.*", "version: 1.0")
+                .replaceFirst("version.*", "version: 2.0")
                 .replaceFirst("description.*", "description: Space time planets rockets");
 
         MockMultipartFile swaggerDoc1v1 = new MockMultipartFile("swaggerDoc", spec1v1.getBytes());

@@ -39,11 +39,11 @@ public class ApiSearchTests {
         return app;
     }
 
-    private Api createApi(Application app, String name, String apiDescription, ApiStatus status) {
+    private Api createApi(Application app, String name, String version, String apiDescription, ApiStatus status) {
 
         Api api = Api.builder()
                 .name(name)
-                .version("1")
+                .version(version)
                 .description("A sample description")
                 .swaggerDefinition(apiDescription)
                 .status(status)
@@ -57,10 +57,10 @@ public class ApiSearchTests {
         // Create application
         Application app = createApp("testApp1", "test1@gmail.com");
         // Create apis with fake descriptions
-        createApi(app, "Fruits API", "apple fruit, banana are awesome", ApiStatus.BETA);
-        createApi(app, "Space API", "technology space time are interesting concepts this", ApiStatus.STABLE);
-        createApi(app, "Old API", " Old technology space time are interesting concepts", ApiStatus.ARCHIVED);
-        createApi(app, "Tech API", "Ban this Tech!", ApiStatus.STABLE);
+        createApi(app, "Fruits API", "1.0", "apple fruit, banana are awesome", ApiStatus.BETA);
+        createApi(app, "Space API", "2.0", "technology space time are interesting concepts this", ApiStatus.STABLE);
+        createApi(app, "Old API", "3.0", " Old technology space time are interesting concepts", ApiStatus.ARCHIVED);
+        createApi(app, "Tech API", "4.0", "Ban this Tech!", ApiStatus.STABLE);
 
     }
 
