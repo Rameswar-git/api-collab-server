@@ -23,6 +23,7 @@ public class ApiMapper {
                 .description(api.getDescription())
                 .status(api.getStatus().toString())
                 .tags(api.getTags())
+                .applicationId(api.getApplication().getId())
                 .build();
     }
 

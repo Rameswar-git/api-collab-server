@@ -35,5 +35,7 @@ public class ApiDTO implements Serializable {
 
     private List<String> tags;
 
+    private String applicationId;
+
     private String swaggerDefinition;
 }

@@ -2,6 +2,7 @@ package io.apicollab.server.mapper;
 
 import io.apicollab.server.constant.ApiStatus;
 import io.apicollab.server.domain.Api;
+import io.apicollab.server.domain.Application;
 import io.apicollab.server.dto.ApiDTO;
 import org.junit.Test;
 
@@ -21,8 +22,9 @@ public class ApiMapperTest {
 
     @Test
     public void toDto() {
-        Api api = Api.builder().id("id").name("name").version("v1").status(ApiStatus.BETA).description("api description").swaggerDefinition("{}").build();
-        ApiDTO apiDTO = ApiDTO.builder().apiId("id").name("name").version("v1").status("BETA").description("api description").swaggerDefinition(null).build();
+        Application app = Application.builder().id("1324").build();
+        Api api = Api.builder().id("id").name("name").version("v1").status(ApiStatus.BETA).description("api description").swaggerDefinition("{}").application(app).build();
+        ApiDTO apiDTO = ApiDTO.builder().apiId("id").name("name").version("v1").status("BETA").description("api description").swaggerDefinition(null).applicationId(app.getId()).build();
         assertThat(apiMapper.toDto(api)).isEqualToComparingFieldByField(apiDTO);
     }
 
@@ -33,10 +35,11 @@ public class ApiMapperTest {
 
     @Test
     public void toDtos() {
-        Api api = Api.builder().id("id").name("name").version("v1").status(ApiStatus.BETA).description("api description").swaggerDefinition("{}").build();
-        Api api1 = Api.builder().id("id1").name("name1").version("v1").status(ApiStatus.BETA).description("api description1").swaggerDefinition("{}").build();
-        ApiDTO apiDTO = ApiDTO.builder().apiId("id").name("name").version("v1").status("BETA").description("api description").swaggerDefinition(null).build();
-        ApiDTO apiDTO1 = ApiDTO.builder().apiId("id1").name("name1").version("v1").status("BETA").description("api description1").swaggerDefinition(null).build();
+        Application app = Application.builder().id("1324").build();
+        Api api = Api.builder().id("id").name("name").version("v1").status(ApiStatus.BETA).description("api description").swaggerDefinition("{}").application(app).build();
+        Api api1 = Api.builder().id("id1").name("name1").version("v1").status(ApiStatus.BETA).description("api description1").swaggerDefinition("{}").application(app).build();
+        ApiDTO apiDTO = ApiDTO.builder().apiId("id").name("name").version("v1").status("BETA").description("api description").swaggerDefinition(null).applicationId(app.getId()).build();
+        ApiDTO apiDTO1 = ApiDTO.builder().apiId("id1").name("name1").version("v1").status("BETA").description("api description1").swaggerDefinition(null).applicationId(app.getId()).build();
         Collection<ApiDTO> apiDTOs = apiMapper.toDtos(Arrays.asList(api, api1));
         assertThat(apiDTOs).hasSize(2);
         assertThat(apiDTOs).contains(apiDTO);

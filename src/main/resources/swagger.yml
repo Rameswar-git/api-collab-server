@@ -337,12 +337,23 @@ components:
         apiId:
           type: string
           description: Unique application reference
+        applicationId:
+          type: string
+          example: "fcd39ef6-d9cc-4f38-a8a1-6795388aaf2c"
         name:
           type: string
           description: Name of the application
         version:
           type: string
           description: Email address of the main contact
+        status:
+          type: string
+          enum:
+            - BETA
+            - STABLE,
+            - DEPRECATED,
+            - ARCHIVED
+
     GenericList:
       properties:
         totalCount:
