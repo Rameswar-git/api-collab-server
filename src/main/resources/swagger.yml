@@ -350,8 +350,9 @@ components:
           type: string
           enum:
             - BETA
-            - STABLE,
-            - DEPRECATED,
+            - STABLE
+            - LIVE
+            - DEPRECATED
             - ARCHIVED
 
     GenericList:
