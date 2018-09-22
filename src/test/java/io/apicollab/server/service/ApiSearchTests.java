@@ -61,6 +61,8 @@ public class ApiSearchTests {
         createApi(app, "Space API", "2.0", "technology space time are interesting concepts this", ApiStatus.STABLE);
         createApi(app, "Old API", "3.0", " Old technology space time are interesting concepts", ApiStatus.ARCHIVED);
         createApi(app, "Tech API", "4.0", "Ban this Tech!", ApiStatus.STABLE);
+        createApi(app, "Live API", "5.0", "a live api", ApiStatus.LIVE);
+
 
     }
 
@@ -106,6 +108,16 @@ public class ApiSearchTests {
         List<Api> results = apiService.search("space time").stream().collect(Collectors.toList());
         assertThat(results).hasSize(1);
         assertThat(results.get(0).getName()).isEqualToIgnoringCase("Space API");
+    }
+
+    /**
+     * Search to ensure Live APIs are returned
+     */
+    @Test
+    public void searchIncludesLive() {
+        List<Api> results = apiService.search("live").stream().collect(Collectors.toList());
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getName()).isEqualToIgnoringCase("Live API");
     }
 
     /**

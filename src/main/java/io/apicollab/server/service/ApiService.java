@@ -26,7 +26,7 @@ public class ApiService {
     @Autowired
     private ApiSearchRepository searchRepository;
 
-    List<ApiStatus> searchableStatusCodes = asList(ApiStatus.BETA, ApiStatus.STABLE, ApiStatus.DEPRECATED);
+    List<ApiStatus> searchableStatusCodes = asList(ApiStatus.BETA, ApiStatus.STABLE, ApiStatus.LIVE, ApiStatus.DEPRECATED);
     
     @Transactional
     public Api create(Application application, Api api) {

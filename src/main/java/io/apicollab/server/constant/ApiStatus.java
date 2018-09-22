@@ -4,6 +4,7 @@ public enum ApiStatus {
 
     BETA,
     STABLE,
+    LIVE,
     DEPRECATED,
     ARCHIVED
 }

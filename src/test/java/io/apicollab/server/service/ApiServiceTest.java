@@ -63,6 +63,19 @@ public class ApiServiceTest {
     }
 
     @Test
+    public void createNewWithLiveTag() {
+        // Create an application
+        Application application = Application.builder().name("Application_1").email("app1@appcompany.com").build();
+        Application dbApplication = applicationService.create(application);
+        Api api = Api.builder().name("Api_1").version("0.1").swaggerDefinition("{}").description("a description").status(ApiStatus.LIVE).build();
+        Api dbApi = applicationService.createNewApiVersion(dbApplication.getId(), api);
+
+        // Retrieve created application
+        dbApi = apiService.findOne(dbApi.getId());
+        assertThat(dbApi.getStatus()).isEqualTo(ApiStatus.LIVE);
+    }
+
+    @Test
     public void descriptionTruncatedTo255Chars() {
         String description = "looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo" +
                 "ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo" +
